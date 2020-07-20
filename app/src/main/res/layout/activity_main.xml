@@ -74,6 +74,24 @@
 
     </RelativeLayout>
 
+    <Switch
+        android:id="@+id/btn_startService"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="22dp"
+        android:textStyle="bold"
+        android:paddingHorizontal="30dp"
+        android:layout_marginHorizontal="9dp"
+        android:layout_marginTop="15dp"
+        android:background="#ffffff"
+        android:textColor="#E81123"
+        android:elegantTextHeight="true"
+        android:elevation="2dp"
+        android:layout_below="@+id/relView_checkbox"
+        android:layout_centerHorizontal="true"
+        android:focusableInTouchMode="true"
+        android:text="Start Service"/>
+
 
     <TextView
         android:layout_width="match_parent"
@@ -81,14 +99,14 @@
         android:id="@+id/activity"
         android:text="Safety Status"
         android:textSize="20dp"
-        android:layout_below="@+id/relView_checkbox"
+        android:layout_below="@+id/btn_startService"
         android:gravity="center"
         android:textStyle="bold"
         android:background="#08000000"
         android:textColor="#5E5B5B"
         android:elevation="9dp"
         android:layout_marginHorizontal="9dp"
-        android:layout_marginTop="18dp"/>
+        android:layout_marginTop="15dp"/>
 
 
     <com.airbnb.lottie.LottieAnimationView
@@ -111,7 +129,7 @@
         app:lottie_rawRes="@raw/warning"
         app:lottie_autoPlay="false"
         app:lottie_loop="true"
-        android:visibility="visible"/>
+        android:visibility="invisible"/>
 
 
     <TextView
@@ -142,7 +160,7 @@
         android:textColor="#9FF471"
         android:textAllCaps="true"
         android:fontFamily="sans-serif-medium"
-        android:visibility="invisible"/>
+        android:visibility="visible"/>
 
     <TextView
         android:id="@+id/safetySTS_unsafe"
@@ -155,7 +173,8 @@
         android:textSize="30dp"
         android:textColor="#F47171"
         android:textAllCaps="true"
-        android:fontFamily="sans-serif-medium"/>
+        android:fontFamily="sans-serif-medium"
+        android:visibility="invisible"/>
 
 
 
