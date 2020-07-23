@@ -23,6 +23,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.os.Vibrator;
 import android.telephony.SmsManager;
 import android.util.Log;
 
@@ -45,20 +46,23 @@ public class MyService extends Service implements SensorEventListener {
     public MyService() {
     }
 
+    // Creating TAG's
     private static final String TAG = "foregroundService";
     private static final String TAG_ACC = "acceleration";
     private static final String TAG_TASK = "fallTask";
     private static final String TAG_FALL = "Fall Detected";
 
-//    Creating static variables
+    // Creating static variables
 //    public static boolean isServiceStopped = false;
     public static boolean isFallTaskCancelled = false;
     public static boolean notificationAlert,sendSMS,sendLocation,voiceAlert;
     public static String location_lat,location_log,location_address,location_link;
+    public static String emgName,emgNumber,emgMessage;
 
     String  xValue, yValue, zValue;
     String netValue = "";
     double netAccel;
+
 
     // Creating objects of classes needed
 
@@ -66,6 +70,7 @@ public class MyService extends Service implements SensorEventListener {
     Sensor accelerometer;
     Notification notification;
     NotificationCompat.Builder builder;
+    Vibrator vibrator;
     FallNotificationService fallTask;
 
     // Notification channel for foreground service
@@ -192,7 +197,6 @@ public class MyService extends Service implements SensorEventListener {
 
         builder = new NotificationCompat.Builder(this,CHANNEL_ID1);
         builder.setSmallIcon(R.drawable.ic_fall)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent)
                 .setColor(Color.GREEN)
                 .setOngoing(true)
@@ -224,6 +228,7 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
 
     FusedLocationProviderClient fusedLocationProviderClient;
     MyReceiver myReceiver;
+    Vibrator vibrator;
 
 
     @Override
@@ -233,6 +238,7 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(serviceContext);
         getLocation(serviceContext);
         myReceiver = new MyReceiver();
+        vibrator = (Vibrator) serviceContext.getSystemService(Context.VIBRATOR_SERVICE);
 
         super.onPreExecute();
     }
@@ -265,7 +271,8 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
                 .setPriority(Notification.PRIORITY_MAX)
                 .setColor(Color.RED)
                 .setContentIntent(mainActivityPendingIntent)
-                .setVibrate(new long[] { 1000, 1000, 1000 })
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setVibrate(new long[] { 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 })
                 .addAction(0,"Cancel",actionPendingIntent);
         NotificationManagerCompat NotificationMgr = NotificationManagerCompat.from(serviceContext);
 
@@ -289,8 +296,11 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
                     .setProgress(30,i,false)
                     .build());
             SystemClock.sleep(1000);
+//            vibrator.vibrate(500);
         }
         getLocation(serviceContext);
+        cancelNotification(serviceContext,MyService.NOTIFICATION_ID2);
+        SystemClock.sleep(1000);
         if(MyService.sendSMS){
             if(MyService.sendLocation){
                 sendSMS(MyService.location_link,MyService.location_address);
@@ -381,12 +391,14 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
     @SuppressLint("UnlocalizedSms")
     public void sendSMS(String location_link,String location_address) {
         SmsManager myManager = SmsManager.getDefault();
-        myManager.sendTextMessage("8770016236", null, "Hello! I need Help" +"\n" +location_address+"\n"+ location_link , null, null);
+//        myManager.sendTextMessage("8770016236", null, "Hello, I need help." +"\n" +location_address+".\n"+ location_link , null, null);
+        myManager.sendTextMessage(MainActivity.emgNumber, null, MainActivity.emgMessage +"\n" +location_address+"\n"+ location_link , null, null);
     }
     @SuppressLint("UnlocalizedSms")
     public void sendSMS() {
         SmsManager myManager = SmsManager.getDefault();
-        myManager.sendTextMessage("8770016236", null, "Hello! I need Help", null, null);
+//        myManager.sendTextMessage("8770016236", null, "Hello, I need help.", null, null);
+        myManager.sendTextMessage(MainActivity.emgNumber, null, MainActivity.emgMessage, null, null);
     }
 
     public void getLocation(final Context context) {

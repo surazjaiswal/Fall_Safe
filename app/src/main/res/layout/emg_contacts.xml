@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Emergency Contact"
+        android:textSize="20dp"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:textColor="#e5e5e5"
+        android:background="#404040"
+        android:paddingVertical="2dp"
+        android:layout_marginHorizontal="13dp"
+        android:layout_marginTop="10dp"/>
+
+    <TextView
+        android:id="@+id/emg_Name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="20dp"
+        android:layout_marginTop="10dp"
+        android:hint="Contact Name"
+        android:layout_marginHorizontal="20dp"
+        android:drawableLeft="@drawable/ic_contact"
+        android:gravity="center">
+
+    </TextView>
+
+    <TextView
+        android:id="@+id/emg_Number"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="20dp"
+        android:layout_marginTop="10dp"
+        android:drawableLeft="@drawable/ic_number"
+        android:layout_marginHorizontal="20dp"
+        android:inputType="number"
+        android:hint="Contact Number"
+        android:gravity="center">
+
+    </TextView>
+
+    <TextView
+        android:id="@+id/emg_Message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="20dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginHorizontal="20dp"
+        android:drawableLeft="@drawable/ic_message"
+        android:hint="Emergency Message"
+        android:gravity="center">
+
+    </TextView>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp">
+
+        <Button
+            android:id="@+id/btn_edit_emgContact"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="edit contact"
+            android:textSize="18dp"
+            android:textStyle="bold"
+            android:backgroundTint="#404040"
+            android:textColor="#e5e5e5"
+            android:layout_weight="1">
+
+        </Button>
+
+    </LinearLayout>
+
+</LinearLayout>
