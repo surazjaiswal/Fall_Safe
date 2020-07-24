@@ -38,6 +38,8 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -55,7 +57,7 @@ public class MyService extends Service implements SensorEventListener {
     // Creating static variables
 //    public static boolean isServiceStopped = false;
     public static boolean isFallTaskCancelled = false;
-    public static boolean notificationAlert,sendSMS,sendLocation,voiceAlert;
+    public static boolean vibrationAlert,sendSMS,sendLocation,voiceAlert;
     public static String location_lat,location_log,location_address,location_link;
     public static String emgName,emgNumber,emgMessage;
 
@@ -137,19 +139,21 @@ public class MyService extends Service implements SensorEventListener {
                         try {
                             if(Double.parseDouble(netValue) < 0.1){
                                 Log.d(TAG_ACC, " x: "+ xValue +  " y: " + yValue + " z: " + zValue + " netValue: " + netValue);
-                                netValue = "!!! FALL !!!";
+//                                netValue = "!!! FALL !!!";
                                 Log.d(TAG_FALL, "run: fall Detected");
                                 if(fallTask.getStatus() == AsyncTask.Status.RUNNING){
                                     Log.d(TAG_TASK, "run: taskRunning");
                                 }else {
                                     fallTask = new FallNotificationService(MyService.this);
                                     fallTask.execute();
+//                                    FallEventActivity.fallEvents.add(0,new FallEvents(location_link,getDateTime()));
+//                                    FallEventActivity.saveData();
+//                                    System.out.println(FallEventActivity.fallEvents.get(0).fall_date_time);
                                 }
                             }
                         } catch (NumberFormatException e) {
                             e.printStackTrace();
                         }
-                        Log.d(TAG, "run: Service IS Running");
 //                        updateForegroundNotification();
                         SystemClock.sleep(100);
                     }
@@ -189,6 +193,13 @@ public class MyService extends Service implements SensorEventListener {
 
     }
 
+    public String getDateTime(){
+        Date date = new Date();
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss a");
+        String DateToStr = format.format(date);
+//        System.out.println(DateToStr);
+        return DateToStr;
+    }
 
     public void fgServiceNotification(){
 
@@ -279,14 +290,8 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
         for (int i = 1; i <= 30; i++) {
             Log.d(TAG, "doInBackground: task running " + i);
             if(MyService.isFallTaskCancelled){
-                /*NotificationMgr.notify(MyService.NOTIFICATION_ID2,notificationBuilder.setContentText("False alarm recorded")
-                                .setOnlyAlertOnce(false)
-                                .setOngoing(false)
-                                .setColor(Color.WHITE)
-                                .build());*/
-                SystemClock.sleep(1000);
                 cancelNotification(serviceContext,MyService.NOTIFICATION_ID2);
-                SystemClock.sleep(1000);
+                SystemClock.sleep(500);
                 resetNotify(serviceContext,MyService.NOTIFICATION_ID2,MyService.CHANNEL_ID2);
 //                MyService.isFallTaskCancelled=false;
                 return "Cancelled";
@@ -296,11 +301,15 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
                     .setProgress(30,i,false)
                     .build());
             SystemClock.sleep(1000);
-//            vibrator.vibrate(500);
+            if(MyService.vibrationAlert){
+            vibrator.vibrate(500);
+            }
         }
         getLocation(serviceContext);
         cancelNotification(serviceContext,MyService.NOTIFICATION_ID2);
-        SystemClock.sleep(1000);
+        FallEventActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime()));
+        FallEventActivity.saveData();
+        SystemClock.sleep(500);
         if(MyService.sendSMS){
             if(MyService.sendLocation){
                 sendSMS(MyService.location_link,MyService.location_address);
@@ -312,11 +321,6 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
             cancelNotification(serviceContext,MyService.NOTIFICATION_ID2);
             failNotify(serviceContext,MyService.NOTIFICATION_ID2,MyService.CHANNEL_ID2);
         }
-
-        /*NotificationMgr.notify(MyService.NOTIFICATION_ID2,notificationBuilder.setContentText("Help message send")
-                .setColor(Color.GREEN)
-                .setOngoing(false)
-                .build());*/
 
         return null;
     }
@@ -448,6 +452,13 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
         });
     }
 
+    public String getDateTime(){
+        Date date = new Date();
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss a");
+        String DateToStr = format.format(date);
+//        System.out.println(DateToStr);
+        return DateToStr;
+    }
 
 
 }

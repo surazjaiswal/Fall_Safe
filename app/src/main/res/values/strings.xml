@@ -4,4 +4,5 @@
     <string name="emgName">com.example.epilepsycare.emgname</string>
     <string name="emgNumber">com.example.epilepsycare.emgnumber</string>
     <string name="emgMessage">com.example.epilepsycare.emgmessage</string>
+    <string name="fallEvent">com.example.epilepsycare.fallevents</string>
 </resources>

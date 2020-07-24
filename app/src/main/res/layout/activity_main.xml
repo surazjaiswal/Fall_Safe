@@ -31,19 +31,19 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
             <CheckBox
-                android:id="@+id/chk_bx_notify"
+                android:id="@+id/chk_bx_vibrate"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="Notification Alert"
-                android:textSize="17dp"
-                android:checked="true"/>
+                android:text="Vibration Alert"
+                android:textSize="17dp" />
             <CheckBox
                 android:id="@+id/chk_bx_sendSMS"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:text="Send SMS"
+                android:checked="true"
                 android:textSize="17dp"/>
 
         </LinearLayout>

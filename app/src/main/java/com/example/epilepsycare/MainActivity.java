@@ -1,8 +1,11 @@
 package com.example.epilepsycare;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.app.Activity;
@@ -16,6 +19,8 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -25,6 +30,12 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+
 public class MainActivity extends AppCompatActivity {
 
 
@@ -32,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
     TextView tv_safetySTS_safe,tv_safetySTS_unsafe;
     Button btn_emgContacts,btn_history,btn_help;
-    CheckBox chk_bx_Notify,chk_bx_sendSMS,chk_bx_voiceAlert,chk_bx_sendLocation;
+    CheckBox chk_bx_Vibrate,chk_bx_sendSMS,chk_bx_voiceAlert,chk_bx_sendLocation;
     Switch btn_startService;
 
     Intent serviceIntent;
@@ -40,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
 
+    // AlertDialog for emgContact view
     AlertDialog.Builder contactDialog;
     View contactView;
 
@@ -74,7 +86,10 @@ public class MainActivity extends AppCompatActivity {
         savedPreferences();
         emgSavedContact();
 
-
+        // checking for past fall events
+        if(FallEventActivity.fallEvents.isEmpty()){
+            FallEventActivity.fallEvents = new ArrayList<>();
+        }
 
         // For foreground service
         if(isMyServiceRunning()){
@@ -104,11 +119,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // onChecked Change Listener
-        chk_bx_Notify.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        chk_bx_Vibrate.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                MyService.notificationAlert = chk_bx_Notify.isChecked();
-                editor.putBoolean("notifyAlert",chk_bx_Notify.isChecked());
+                MyService.vibrationAlert = chk_bx_Vibrate.isChecked();
+                editor.putBoolean("notifyAlert",chk_bx_Vibrate.isChecked());
                 editor.apply();
             }
         });
@@ -147,8 +162,44 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        btn_help.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getHelpDialog();
+            }
+        });
+        btn_history.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getHistoryDialog();
+            }
+        });
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu,menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.menu_profile:{
+                Toast.makeText(this, "This is profile", Toast.LENGTH_SHORT).show();
+                break;
+            }
+            case R.id.menu_setting:{
+                Toast.makeText(this, "This is Setting", Toast.LENGTH_SHORT).show();
+                break;
+            }
+            case R.id.menu_about:{
+                aboutDialog();
+                break;
+            }
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
     public boolean isMyServiceRunning() {
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
@@ -168,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
         tv_safetySTS_unsafe = findViewById(R.id.safetySTS_unsafe);
 
         // initializing checkboxes
-        chk_bx_Notify = findViewById(R.id.chk_bx_notify);
+        chk_bx_Vibrate = findViewById(R.id.chk_bx_vibrate);
         chk_bx_sendSMS = findViewById(R.id.chk_bx_sendSMS);
         chk_bx_voiceAlert = findViewById(R.id.chk_bx_voice);
         chk_bx_sendLocation = findViewById(R.id.chk_bx_location);
@@ -181,10 +232,13 @@ public class MainActivity extends AppCompatActivity {
         btn_history = findViewById(R.id.btn_history);
         btn_help = findViewById(R.id.btn_help);
 
+//        // Recycler view
+//        fallRecyclerView = findViewById(R.id.fall_recycler_view);
+
     }
 
     public void savedPreferences(){
-        chk_bx_Notify.setChecked(sharedPreferences.getBoolean("notifyAlert",true));
+        chk_bx_Vibrate.setChecked(sharedPreferences.getBoolean("notifyAlert",false));
         chk_bx_sendSMS.setChecked(sharedPreferences.getBoolean("sendSMS",false));
         chk_bx_sendLocation.setChecked(sharedPreferences.getBoolean("sendLocation",false));
         chk_bx_voiceAlert.setChecked(sharedPreferences.getBoolean("voiceAlert",false));
@@ -193,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
         tv_emg_number.setText(sharedPreferences.getString("emgNumber","1234567890"));
         tv_emg_message.setText(sharedPreferences.getString("emgMessage","Hello, I need help."));*/
 
-        MyService.notificationAlert = sharedPreferences.getBoolean("notifyAlert",true);
+        MyService.vibrationAlert = sharedPreferences.getBoolean("notifyAlert",true);
         MyService.sendSMS = sharedPreferences.getBoolean("sendSMS",false);
         MyService.sendLocation = sharedPreferences.getBoolean("sendLocation",false);
         MyService.voiceAlert = sharedPreferences.getBoolean("voiceAlert",false);
@@ -230,6 +284,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
     public void editEmgContact(){
         AlertDialog.Builder editContactDialog = new AlertDialog.Builder(MainActivity.this);
         View editEmgContactView = getLayoutInflater().inflate(R.layout.edit_emg_contacts,null);
@@ -259,16 +314,16 @@ public class MainActivity extends AppCompatActivity {
                 emgNumber = edit_emg_number.getText().toString().trim();
                 emgMessage = edit_emg_message.getText().toString().trim();
 
-                tv_emg_name.setText(emgName);
-                tv_emg_number.setText(emgNumber);
-                tv_emg_message.setText(emgMessage);
-
                 if(emgName.length() == 0 || emgNumber.length() == 0 || emgMessage.length() == 0){
                     Toast.makeText(MainActivity.this, "Please Enter all details", Toast.LENGTH_SHORT).show();
                 }else {
 //                    MyService.emgName = emgName;
 //                    MyService.emgNumber = emgNumber;
 //                    MyService.emgMessage = emgMessage;
+                    tv_emg_name.setText(emgName);
+                    tv_emg_number.setText(emgNumber);
+                    tv_emg_message.setText(emgMessage);
+
                     editor.putString(getString(R.string.emgName),emgName);
                     editor.putString(getString(R.string.emgNumber),emgNumber);
                     editor.putString(getString(R.string.emgMessage),emgMessage);
@@ -280,6 +335,66 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    public void getHelpDialog(){
+        AlertDialog.Builder helpDialog = new AlertDialog.Builder(MainActivity.this);
+        View helpView = getLayoutInflater().inflate(R.layout.help_window,null);
+        Button btn_help_cancel = helpView.findViewById(R.id.btn_help_cancel);
+
+        helpDialog.setView(helpView);
+        final AlertDialog alert4help = helpDialog.create();
+        alert4help.setCanceledOnTouchOutside(false);
+        alert4help.show();
+
+        btn_help_cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alert4help.dismiss();
+            }
+        });
+
+    }
+
+    public void getHistoryDialog(){
+        /*AlertDialog.Builder historyDialog = new AlertDialog.Builder(MainActivity.this);
+        View historyView = getLayoutInflater().inflate(R.layout.fall_events,null);
+
+        historyDialog.setView(historyView);
+        final AlertDialog alert4help = historyDialog.create();
+        alert4help.setCanceledOnTouchOutside(true);
+        alert4help.show();*/
+        Intent intent = new Intent(this,FallEventActivity.class);
+        startActivity(intent);
+    }
+
+    public void aboutDialog(){
+        AlertDialog.Builder aboutDialog = new AlertDialog.Builder(MainActivity.this);
+        View aboutView = getLayoutInflater().inflate(R.layout.about,null);
+
+        aboutDialog.setView(aboutView);
+        aboutDialog.create().show();
+
+    }
+
+    public void saveData(){
+        sharedPreferences = getPreferences(MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(FallEventActivity.fallEvents);
+        editor.putString("fallEvents",json);
+        editor.apply();
+    }
+
+    public void loadData(){
+        sharedPreferences = getPreferences(MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = sharedPreferences.getString("fallEvents",null);
+        Type type = new TypeToken<ArrayList<FallEvents>>(){}.getType();
+        FallEventActivity.fallEvents = gson.fromJson(json,type);
+        if(FallEventActivity.fallEvents==null){
+            FallEventActivity.fallEvents = new ArrayList<>();
+        }
     }
 
     public void getLocation(){}

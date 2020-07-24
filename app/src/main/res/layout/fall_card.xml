@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/back_view"
+    android:layout_margin="5dp"
+    android:id="@+id/fall_event_cardView">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="5dp"
+        android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/img_fall_event"
+            android:layout_width="40dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_fall"/>
+        <TextView
+            android:id="@+id/fall_event_datetime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/img_fall_event"
+            android:text="Date And Time"
+            android:textStyle="bold"
+            android:textSize="14dp"
+            android:layout_marginLeft="20dp"/>
+
+        <TextView
+            android:id="@+id/fall_event_location"
+            android:layout_width="240dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/fall_event_datetime"
+            android:layout_marginLeft="20dp"
+            android:lines="2"
+            android:textColor="#304FFE"
+            android:layout_toRightOf="@+id/img_fall_event"
+            android:text="Location of fall"
+            android:textSize="14dp" />
+
+        <ImageView
+            android:id="@+id/img_fall_event_share"
+            android:layout_width="25dp"
+            android:layout_height="50dp"
+            android:layout_alignParentRight="true"
+            android:src="@drawable/ic_share"
+            android:layout_marginRight="5dp"
+            android:layout_alignParentEnd="true" />
+
+        <ImageView
+            android:id="@+id/img_fall_event_delete"
+            android:layout_width="25dp"
+            android:layout_height="50dp"
+            android:layout_toLeftOf="@+id/img_fall_event_share"
+            android:layout_marginRight="15dp"
+            android:src="@drawable/ic_delete" />
+
+    </RelativeLayout>
+
+</androidx.cardview.widget.CardView>

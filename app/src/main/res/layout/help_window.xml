@@ -1,6 +1,128 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:paddingBottom="20dp"
+    android:orientation="vertical">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Help Window"
+        android:textStyle="bold"
+        android:textSize="20dp"
+        android:gravity="center"
+        android:layout_margin="20dp"/>
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_gravity="center"
+        app:lottie_speed="1"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="false"
+        app:lottie_rawRes="@raw/help"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Click to Call"
+        android:textStyle="bold"
+        android:textSize="20dp"
+        android:gravity="center"
+        android:layout_margin="20dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp">
+
+        <Button
+            android:id="@+id/btn_callPolice"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#ffe5e5"
+            android:textColor="#ff6666"
+            android:text="Police"
+            android:textSize="18dp"
+            android:textStyle="bold"
+            android:layout_weight="1"/>
+
+        <Button
+            android:id="@+id/btn_callHospital"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:text="Hospital"
+            android:textSize="18dp"
+            android:backgroundTint="#efffe5"
+            android:textColor="#5cc864"
+            android:textStyle="bold"
+            android:layout_weight="1"/>
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp">
+
+        <Button
+            android:id="@+id/btn_callHome"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:text="home"
+            android:backgroundTint="#e5fffd"
+            android:textColor="#00ccbc"
+            android:textSize="18dp"
+            android:textStyle="bold"
+            android:layout_weight="1"/>
+
+        <Button
+            android:id="@+id/btn_callEmergency"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="#fef1fd"
+            android:textColor="#C85CC1"
+            android:text="Emergency"
+            android:textStyle="bold"
+            android:textSize="18dp"/>
+
+    </LinearLayout>
+
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="12dp">
+
+        <Button
+            android:id="@+id/btn_help_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="Edit"
+            android:background="@drawable/back_view"
+            android:layout_weight="1"
+            android:textSize="20dp" />
+
+        <Button
+            android:id="@+id/btn_help_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="4dp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:background="@drawable/back_view"
+            android:text="Cancel"
+            android:layout_weight="1"
+            android:textSize="20dp" />
+
+    </LinearLayout>
+
+</LinearLayout>
