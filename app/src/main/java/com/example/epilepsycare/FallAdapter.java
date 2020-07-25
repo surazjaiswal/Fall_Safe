@@ -18,6 +18,7 @@ public class FallAdapter extends RecyclerView.Adapter<FallAdapter.ViewHolder>{
         void onItemClick(int position);
         void ItemDelete(int position);
         void ItemShare(int position);
+        void OnLinkClick(int position);
     }
 
     public void setOnItemClickListener(OnItemClickListener listener){
@@ -90,6 +91,17 @@ public class FallAdapter extends RecyclerView.Adapter<FallAdapter.ViewHolder>{
                         int position = getAdapterPosition();
                         if(position != RecyclerView.NO_POSITION){
                             listener.ItemShare(position);
+                        }
+                    }
+                }
+            });
+            tv_location.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(listener!=null){
+                        int position = getAdapterPosition();
+                        if(position != RecyclerView.NO_POSITION){
+                            listener.OnLinkClick(position);
                         }
                     }
                 }

@@ -10,6 +10,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.hardware.Sensor;
@@ -24,6 +25,8 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.os.Vibrator;
+import android.preference.PreferenceManager;
+import android.speech.tts.TextToSpeech;
 import android.telephony.SmsManager;
 import android.util.Log;
 
@@ -42,6 +45,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.StringTokenizer;
 
 public class MyService extends Service implements SensorEventListener {
 
@@ -57,11 +61,11 @@ public class MyService extends Service implements SensorEventListener {
     // Creating static variables
 //    public static boolean isServiceStopped = false;
     public static boolean isFallTaskCancelled = false;
-    public static boolean vibrationAlert,sendSMS,sendLocation,voiceAlert;
-    public static String location_lat,location_log,location_address,location_link;
-    public static String emgName,emgNumber,emgMessage;
+    public static boolean vibrationAlert, sendSMS, sendLocation, voiceAlert;
+    public static String location_lat, location_log, location_address, location_link;
+    public static String emgName, emgNumber, emgMessage;
 
-    String  xValue, yValue, zValue;
+    String xValue, yValue, zValue;
     String netValue = "";
     double netAccel;
 
@@ -74,6 +78,8 @@ public class MyService extends Service implements SensorEventListener {
     NotificationCompat.Builder builder;
     Vibrator vibrator;
     FallNotificationService fallTask;
+    SharedPreferences preferences;
+    static TextToSpeech textToSpeech;
 
     // Notification channel for foreground service
 
@@ -89,13 +95,35 @@ public class MyService extends Service implements SensorEventListener {
     public static final String CHANNEL_DESC2 = "Sending help message";
     public static final int NOTIFICATION_ID2 = 102;
 
+
     @Override
     public void onCreate() {
 
+        textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status == TextToSpeech.SUCCESS) {
+                    int result = textToSpeech.setLanguage(Locale.getDefault());
+
+                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Log.e("TTS", "onInit: Language not supported ");
+                    } else {
+                        Log.e("TTS", "onInit: Initialization Successful");
+                    }
+                } else {
+                    Log.e("TTS", "onInit: Initialization Failed");
+                }
+            }
+        });
+
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+//        FallEventActivity.preferences = PreferenceManager.getDefaultSharedPreferences(this);
+//        FallEventActivity.loadData();
+
         // Creating Notification Channel
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-            NotificationChannel foregroundChannel = new NotificationChannel(CHANNEL_ID1,CHANNEL_NAME1, NotificationManager.IMPORTANCE_LOW);
-            NotificationChannel fallEventChannel = new NotificationChannel(CHANNEL_ID2,CHANNEL_NAME2,NotificationManager.IMPORTANCE_HIGH);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel foregroundChannel = new NotificationChannel(CHANNEL_ID1, CHANNEL_NAME1, NotificationManager.IMPORTANCE_LOW);
+            NotificationChannel fallEventChannel = new NotificationChannel(CHANNEL_ID2, CHANNEL_NAME2, NotificationManager.IMPORTANCE_HIGH);
             foregroundChannel.setDescription(CHANNEL_DESC1);
             fallEventChannel.setDescription(CHANNEL_DESC2);
             NotificationManager manager = getSystemService(NotificationManager.class);
@@ -109,7 +137,7 @@ public class MyService extends Service implements SensorEventListener {
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         assert sensorManager != null;
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        sensorManager.registerListener(MyService.this,accelerometer,100);
+        sensorManager.registerListener(MyService.this, accelerometer, 100);
 //        sensorManager.registerListener(MyService.this,accelerometer,SensorManager.SENSOR_DELAY_NORMAL);
         Log.d(TAG, "onCreate: Registered Accelerometer Listener");
 
@@ -127,28 +155,31 @@ public class MyService extends Service implements SensorEventListener {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                while (true){
-                    if(MainActivity.isServiceStopped){
+                while (true) {
+                    if (MainActivity.isServiceStopped) {
                         stopForeground(true);
                         stopSelf();
                         MainActivity.isServiceStopped = false;
                         sensorManager.unregisterListener(MyService.this);
+                        if (textToSpeech != null){
+                            textToSpeech.stop();
+                            textToSpeech.shutdown();
+                        }
                         Log.d(TAG, "run: Service Stopped");
                         return;
-                    }else {
+                    } else {
                         try {
-                            if(Double.parseDouble(netValue) < 0.1){
-                                Log.d(TAG_ACC, " x: "+ xValue +  " y: " + yValue + " z: " + zValue + " netValue: " + netValue);
-//                                netValue = "!!! FALL !!!";
+                            if (Double.parseDouble(netValue) < 0.1f) {
+                                Log.d(TAG_FALL, " x: " + xValue + " y: " + yValue + " z: " + zValue + " netValue: " + netValue);
                                 Log.d(TAG_FALL, "run: fall Detected");
-                                if(fallTask.getStatus() == AsyncTask.Status.RUNNING){
+                                String time = preferences.getString("time_limit", String.valueOf(30));
+                                if (fallTask.getStatus() == AsyncTask.Status.RUNNING) {
                                     Log.d(TAG_TASK, "run: taskRunning");
-                                }else {
+                                } else {
                                     fallTask = new FallNotificationService(MyService.this);
-                                    fallTask.execute();
-//                                    FallEventActivity.fallEvents.add(0,new FallEvents(location_link,getDateTime()));
-//                                    FallEventActivity.saveData();
-//                                    System.out.println(FallEventActivity.fallEvents.get(0).fall_date_time);
+                                    if (!time.isEmpty()) {
+                                        fallTask.execute(Integer.parseInt(time));
+                                    }
                                 }
                             }
                         } catch (NumberFormatException e) {
@@ -179,11 +210,11 @@ public class MyService extends Service implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
 
-        xValue = String.format("%.2f",sensorEvent.values[0]);
-        yValue = String.format("%.2f",sensorEvent.values[1]);
-        zValue = String.format("%.2f",sensorEvent.values[2]);
-        netAccel = Math.sqrt(Math.pow((sensorEvent.values[0]),2) + Math.pow((sensorEvent.values[1]),2) + Math.pow((sensorEvent.values[2]),2));
-        netValue = String.format("%.2f",netAccel/9);
+        xValue = String.format("%.2f", sensorEvent.values[0]);
+        yValue = String.format("%.2f", sensorEvent.values[1]);
+        zValue = String.format("%.2f", sensorEvent.values[2]);
+        netAccel = Math.sqrt(Math.pow((sensorEvent.values[0]), 2) + Math.pow((sensorEvent.values[1]), 2) + Math.pow((sensorEvent.values[2]), 2));
+        netValue = String.format("%.2f", netAccel / 9);
 //        Log.d(TAG_ACC, " x: "+ xValue +  " y: " + yValue + " z: " + zValue + " netValue: " + netValue);
 
     }
@@ -193,20 +224,18 @@ public class MyService extends Service implements SensorEventListener {
 
     }
 
-    public String getDateTime(){
+    public String getDateTime() {
         Date date = new Date();
         @SuppressLint("SimpleDateFormat") SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss a");
-        String DateToStr = format.format(date);
-//        System.out.println(DateToStr);
-        return DateToStr;
+        return format.format(date);
     }
 
-    public void fgServiceNotification(){
+    public void fgServiceNotification() {
 
-        Intent intent = new Intent(MyService.this,MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(MyService.this,101,intent,0);
+        Intent intent = new Intent(MyService.this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(MyService.this, 101, intent, 0);
 
-        builder = new NotificationCompat.Builder(this,CHANNEL_ID1);
+        builder = new NotificationCompat.Builder(this, CHANNEL_ID1);
         builder.setSmallIcon(R.drawable.ic_fall)
                 .setContentIntent(pendingIntent)
                 .setColor(Color.GREEN)
@@ -214,32 +243,36 @@ public class MyService extends Service implements SensorEventListener {
                 .setContentTitle("Epilepsy Care")
                 .setContentText("Be aware. Take care.");
         notification = builder.build();
-        startForeground(NOTIFICATION_ID1,notification);
+        startForeground(NOTIFICATION_ID1, notification);
 
     }
 
-    public void updateForegroundNotification(){
-        Log.d(TAG, "run: acceleration Service :: "+netValue);
+    public void updateForegroundNotification() {
+        Log.d(TAG, "run: acceleration Service :: " + netValue);
         builder.setOnlyAlertOnce(true).setContentText("Running Foreground Service  " + netValue).build();
         notification = builder.build();
-        startForeground(NOTIFICATION_ID1,notification);
+        startForeground(NOTIFICATION_ID1, notification);
     }
 
 }
 
-class FallNotificationService extends AsyncTask<Integer,Integer,String>{
+class FallNotificationService extends AsyncTask<Integer, Integer, String> {
 
     private static final String TAG = "Fall Event";
     private static final String TAG_LOK = "Fall Location";
     @SuppressLint("StaticFieldLeak")
     Context serviceContext;
-    public FallNotificationService(Context context) {
+
+    FallNotificationService(Context context) {
         this.serviceContext = context;
     }
 
     FusedLocationProviderClient fusedLocationProviderClient;
     MyReceiver myReceiver;
     Vibrator vibrator;
+    SharedPreferences preferences;
+    TextToSpeech textToSpeech;
+//    FallEventActivity fallEventActivity = new FallEventActivity(serviceContext);
 
 
     @Override
@@ -250,6 +283,7 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
         getLocation(serviceContext);
         myReceiver = new MyReceiver();
         vibrator = (Vibrator) serviceContext.getSystemService(Context.VIBRATOR_SERVICE);
+        preferences = PreferenceManager.getDefaultSharedPreferences(serviceContext);
 
         super.onPreExecute();
     }
@@ -257,22 +291,27 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
     @Override
     protected String doInBackground(Integer... integers) {
 
+        if (preferences.getBoolean("pref_setting_check_voiceAlert", false)) {
+            Log.d(TAG, "doInBackground: speaker active");
+            speak(String.valueOf(integers[0]));
+        }
+
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.FALL_CONFIRMATION_ACTION_OK);
         filter.addAction(Constants.FALL_CONFIRMATION_ACTION_CANCEL);
-        serviceContext.registerReceiver(myReceiver,filter);
+        serviceContext.registerReceiver(myReceiver, filter);
 
-        Intent mainActivityIntent = new Intent(serviceContext,MainActivity.class);
+        Intent mainActivityIntent = new Intent(serviceContext, MainActivity.class);
         PendingIntent mainActivityPendingIntent = PendingIntent.getActivity(serviceContext,
-                111,mainActivityIntent,0);
+                111, mainActivityIntent, 0);
 
-        Intent actionIntentCancel = new Intent(serviceContext,MyReceiver.class);
+        Intent actionIntentCancel = new Intent(serviceContext, MyReceiver.class);
         actionIntentCancel.setAction(Constants.FALL_CONFIRMATION_ACTION_CANCEL);
         PendingIntent actionPendingIntent = PendingIntent.getBroadcast(serviceContext,
-                112,actionIntentCancel,0);
+                112, actionIntentCancel, 0);
 
 
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(serviceContext,MyService.CHANNEL_ID2)
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(serviceContext, MyService.CHANNEL_ID2)
                 .setSmallIcon(R.drawable.ic_fall)
                 .setContentTitle("Help Message")
                 .setContentText("Sending help message in ....")
@@ -283,44 +322,58 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
                 .setColor(Color.RED)
                 .setContentIntent(mainActivityPendingIntent)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setVibrate(new long[] { 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 })
-                .addAction(0,"Cancel",actionPendingIntent);
+                .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000})
+                .addAction(0, "Cancel", actionPendingIntent);
         NotificationManagerCompat NotificationMgr = NotificationManagerCompat.from(serviceContext);
-
-        for (int i = 1; i <= 30; i++) {
+        SystemClock.sleep(6000);
+        for (int i = 1; i <= integers[0]; i++) {
             Log.d(TAG, "doInBackground: task running " + i);
-            if(MyService.isFallTaskCancelled){
-                cancelNotification(serviceContext,MyService.NOTIFICATION_ID2);
+            if (MyService.isFallTaskCancelled) {
+                cancelNotification(serviceContext, MyService.NOTIFICATION_ID2);
                 SystemClock.sleep(500);
-                resetNotify(serviceContext,MyService.NOTIFICATION_ID2,MyService.CHANNEL_ID2);
+                resetNotify(serviceContext, MyService.NOTIFICATION_ID2, MyService.CHANNEL_ID2);
 //                MyService.isFallTaskCancelled=false;
                 return "Cancelled";
             }
-            NotificationMgr.notify(MyService.NOTIFICATION_ID2,notificationBuilder
-                    .setContentText("Sending in " + (30-i) + " seconds")
-                    .setProgress(30,i,false)
+            NotificationMgr.notify(MyService.NOTIFICATION_ID2, notificationBuilder
+                    .setContentText("Sending in " + (integers[0] - i) + " seconds")
+                    .setProgress(integers[0], i, false)
                     .build());
             SystemClock.sleep(1000);
-            if(MyService.vibrationAlert){
-            vibrator.vibrate(500);
+            if (preferences.getBoolean("pref_setting_check_vibration", false)) {
+                vibrator.vibrate(500);
             }
         }
         getLocation(serviceContext);
-        cancelNotification(serviceContext,MyService.NOTIFICATION_ID2);
-        FallEventActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime()));
-        FallEventActivity.saveData();
+        cancelNotification(serviceContext, MyService.NOTIFICATION_ID2);
+//        FallEventActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime()));
+//        FallEventActivity.saveData();
+//        FallEventActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime()));
         SystemClock.sleep(500);
-        if(MyService.sendSMS){
-            if(MyService.sendLocation){
-                sendSMS(MyService.location_link,MyService.location_address);
-            }else {
+        if (preferences.getBoolean("pref_setting_check_voiceAlert", false)) {
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 1; i < 30; i = i + 4) {
+                        speakHelp();
+                        SystemClock.sleep(5000);
+                    }
+                }
+            });
+            thread.start();
+        }
+        if (preferences.getBoolean("pref_setting_check_sendSMS", false)) {
+            if (preferences.getBoolean("pref_setting_check_sendLocation", false)) {
+                sendSMS(MyService.location_link, MyService.location_address);
+            } else {
                 sendSMS();
             }
-            confirmationNotify(serviceContext,MyService.NOTIFICATION_ID2,MyService.CHANNEL_ID2);
-        }else {
-            cancelNotification(serviceContext,MyService.NOTIFICATION_ID2);
-            failNotify(serviceContext,MyService.NOTIFICATION_ID2,MyService.CHANNEL_ID2);
+            confirmationNotify(serviceContext, MyService.NOTIFICATION_ID2, MyService.CHANNEL_ID2);
+        } else {
+            cancelNotification(serviceContext, MyService.NOTIFICATION_ID2);
+            failNotify(serviceContext, MyService.NOTIFICATION_ID2, MyService.CHANNEL_ID2);
         }
+//        FallEventActivity.saveData();
 
         return null;
     }
@@ -332,7 +385,7 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
 
     @Override
     protected void onPostExecute(String s) {
-        MyService.isFallTaskCancelled=false;
+        MyService.isFallTaskCancelled = false;
         serviceContext.unregisterReceiver(myReceiver);
         super.onPostExecute(s);
     }
@@ -349,7 +402,7 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
         notificationManager.cancel(notificationID);
     }
 
-    public void confirmationNotify(Context context, int notificationID,String channelID) {
+    public void confirmationNotify(Context context, int notificationID, String channelID) {
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, channelID)
                 .setAutoCancel(true)
                 .setContentTitle("Send SMS")
@@ -362,7 +415,7 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
         mNotificationMgr.notify(notificationID, mBuilder.build());
     }
 
-    public static void resetNotify(Context context, int notificationID,String channelID) {
+    public static void resetNotify(Context context, int notificationID, String channelID) {
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, channelID)
                 .setAutoCancel(true)
@@ -377,7 +430,7 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
         mNotificationMgr.notify(notificationID, mBuilder.build());
     }
 
-    public static void failNotify(Context context, int notificationID,String channelID) {
+    public static void failNotify(Context context, int notificationID, String channelID) {
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, channelID)
                 .setAutoCancel(true)
@@ -393,16 +446,28 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
     }
 
     @SuppressLint("UnlocalizedSms")
-    public void sendSMS(String location_link,String location_address) {
+    public void sendSMS(String location_link, String location_address) {
         SmsManager myManager = SmsManager.getDefault();
 //        myManager.sendTextMessage("8770016236", null, "Hello, I need help." +"\n" +location_address+".\n"+ location_link , null, null);
-        myManager.sendTextMessage(MainActivity.emgNumber, null, MainActivity.emgMessage +"\n" +location_address+"\n"+ location_link , null, null);
+        myManager.sendTextMessage(MainActivity.emgNumber, null, MainActivity.emgMessage + "\n" + location_address + "\n" + location_link, null, null);
     }
+
     @SuppressLint("UnlocalizedSms")
     public void sendSMS() {
         SmsManager myManager = SmsManager.getDefault();
 //        myManager.sendTextMessage("8770016236", null, "Hello, I need help.", null, null);
         myManager.sendTextMessage(MainActivity.emgNumber, null, MainActivity.emgMessage, null, null);
+    }
+
+
+    public void speak(String timeLimit) {
+        String text = "Seizure has been detected. Help message will be send in "+timeLimit+" seconds";
+        MyService.textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+    }
+
+    public void speakHelp() {
+        String text = " Please Help Me ";
+        MyService.textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
     }
 
     public void getLocation(final Context context) {
@@ -424,13 +489,13 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
             public void onComplete(@NonNull Task<Location> task) {
                 // Initialize Location
                 Location location = task.getResult();
-                if(location != null){
+                if (location != null) {
                     Log.d(TAG, "Location :: " + location);
                     // Initialize geoCoder
                     Geocoder geocoder = new Geocoder(context, Locale.getDefault());
                     // Initialize Address
                     try {
-                        List<Address> addresses = geocoder.getFromLocation(location.getLatitude(),location.getLongitude(),1);
+                        List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
 
                         /*Log.d(TAG, "onComplete: Location :: " + addresses);
                         Log.d(TAG, "onComplete: Location :: " + addresses.get(0).getLatitude());
@@ -439,11 +504,11 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
                         MyService.location_lat = Double.toString(addresses.get(0).getLatitude());
                         MyService.location_log = Double.toString(addresses.get(0).getLongitude());
                         MyService.location_address = addresses.get(0).getAddressLine(0);
-                        MyService.location_link = "http://www.google.com/maps/place/"+MyService.location_lat+","+MyService.location_log;
+                        MyService.location_link = "http://www.google.com/maps/place/" + MyService.location_lat + "," + MyService.location_log;
 
                         Log.d(TAG_LOK, "onComplete: Location :: " + MyService.location_link);
 
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         Log.d(TAG_LOK, "onComplete: " + e);
                         e.printStackTrace();
                     }
@@ -452,13 +517,12 @@ class FallNotificationService extends AsyncTask<Integer,Integer,String>{
         });
     }
 
-    public String getDateTime(){
+    public String getDateTime() {
         Date date = new Date();
         @SuppressLint("SimpleDateFormat") SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss a");
         String DateToStr = format.format(date);
 //        System.out.println(DateToStr);
         return DateToStr;
     }
-
 
 }

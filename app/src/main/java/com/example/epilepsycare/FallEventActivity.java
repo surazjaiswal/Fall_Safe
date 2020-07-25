@@ -4,10 +4,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -19,7 +23,9 @@ import java.util.ArrayList;
 
 public class FallEventActivity extends AppCompatActivity {
 
-    private static final String TAG = "rcViewDestroyed";
+
+    private static final String TAG = "FallEventActivity";
+    Context context;
 
     public static ArrayList<FallEvents> fallEvents = new ArrayList<>();
     public static SharedPreferences preferences;
@@ -28,13 +34,17 @@ public class FallEventActivity extends AppCompatActivity {
     RecyclerView recyclerView;
     FallAdapter fallAdapter;
 
+    FallEventActivity(Context context){
+        this.context = context;
+    }
 
+    @SuppressLint("CommitPrefEdits")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fall_event);
 
-        preferences = getPreferences(MODE_PRIVATE);
+        preferences = PreferenceManager.getDefaultSharedPreferences(context);
         editor = preferences.edit();
 
         loadData();
@@ -47,9 +57,7 @@ public class FallEventActivity extends AppCompatActivity {
         fallAdapter.setOnItemClickListener(new FallAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
-                String s = fallEvents.get(position).fall_location;
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
-                startActivity(intent);
+                Log.d(TAG, "onItemClick: ");
             }
 
             @Override
@@ -68,6 +76,13 @@ public class FallEventActivity extends AppCompatActivity {
                         .setType("text/plain");
                 Intent shareIntent = Intent.createChooser(sendIntent,null);
                 startActivity(shareIntent);
+            }
+
+            @Override
+            public void OnLinkClick(int position) {
+                String s = fallEvents.get(position).fall_location;
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
+                startActivity(intent);
             }
         });
 

@@ -31,9 +31,13 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:padding="15dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginHorizontal="20dp"
+        android:text="@string/about"
         android:textColor="#666E69"
-        android:textSize="14dp"/>
+        android:textSize="16dp"
+        android:textStyle="bold"
+        android:textAlignment="textStart"
+        android:gravity="start" />
 
 </LinearLayout>

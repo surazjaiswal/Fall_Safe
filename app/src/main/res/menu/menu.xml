@@ -2,18 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item
-        android:id="@+id/menu_profile"
-        android:orderInCategory="100"
-        app:showAsAction="never"
-        android:title="Profile">
-    </item>
 
     <item
         android:id="@+id/menu_setting"
         android:orderInCategory="100"
         app:showAsAction="never"
-        android:title="Setting">
+        android:title="Settings">
     </item>
 
     <item

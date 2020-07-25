@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="Alert Methods">
+
+        <CheckBoxPreference
+            android:key="pref_setting_check_sendSMS"
+            android:title="Send SMS"
+            android:summary="Send help message through SMS"
+            android:defaultValue="false"/>
+
+        <CheckBoxPreference
+            android:key="pref_setting_check_sendLocation"
+            android:title="Send Location"
+            android:summary="Send fall/seizure location"
+            android:defaultValue="false"/>
+
+        <CheckBoxPreference
+            android:key="pref_setting_check_voiceAlert"
+            android:title="Voice Alert"
+            android:summary="Voice prompt for help"
+            android:defaultValue="false"/>
+
+        <CheckBoxPreference
+            android:key="pref_setting_check_vibration"
+            android:title="Vibration Alert"
+            android:summary="Vibration after fall detection"
+            android:defaultValue="false"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Timer">
+
+        <EditTextPreference
+            android:defaultValue="30"
+            android:key="time_limit"
+            android:title="Time Limit"
+            android:inputType="number"
+            android:summary="Waiting time for sending SMS"
+            android:dialogTitle="Enter Time limit "
+            android:dialogMessage="In seconds"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Emergency Contacts">
+        <EditTextPreference
+            android:key="emgHomeNumber"
+            android:defaultValue=""
+            android:title="Home"
+            android:summary="Home phone number"
+            android:inputType="number"
+            android:dialogTitle="Enter Home Phone Number"/>
+
+        <EditTextPreference
+            android:key="emgHospitalNumber"
+            android:defaultValue="102"
+            android:title="Hospital"
+            android:summary="Hospital phone number"
+            android:inputType="number"
+            android:dialogTitle="Enter Hospital Phone Number"/>
+        <EditTextPreference
+            android:key="emgPoliceNumber"
+            android:defaultValue="100"
+            android:title="Police"
+            android:summary="Police phone number"
+            android:inputType="number"
+            android:dialogTitle="Enter Home Phone Number"/>
+
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

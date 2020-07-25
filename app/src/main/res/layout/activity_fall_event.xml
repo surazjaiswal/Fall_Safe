@@ -10,9 +10,8 @@
         android:layout_height="match_parent"
         android:padding="5dp"
         android:orientation="vertical"
-        android:background="#43ADAFAF"
+        android:background="#16ADAFAF"
         android:id="@+id/fall_recycler_view">
-
 
     </androidx.recyclerview.widget.RecyclerView>
 

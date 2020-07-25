@@ -16,9 +16,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.internal.$Gson$Preconditions;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -39,11 +42,13 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
 
 
+    private static final String TAG = "MainActivity" ;
     public static boolean isServiceStopped = false;
+    public static int timeLimit;
 
-    TextView tv_safetySTS_safe,tv_safetySTS_unsafe;
-    Button btn_emgContacts,btn_history,btn_help;
-    CheckBox chk_bx_Vibrate,chk_bx_sendSMS,chk_bx_voiceAlert,chk_bx_sendLocation;
+    TextView tv_safetySTS_safe, tv_safetySTS_unsafe;
+    Button btn_emgContacts, btn_history, btn_help;
+    CheckBox chk_bx_Vibrate, chk_bx_sendSMS, chk_bx_voiceAlert, chk_bx_sendLocation;
     Switch btn_startService;
 
     Intent serviceIntent;
@@ -66,18 +71,19 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Asking for permission
-        ActivityCompat.requestPermissions(MainActivity.this,new String[]
+        ActivityCompat.requestPermissions(MainActivity.this, new String[]
                 {Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                Manifest.permission.SEND_SMS,
-                Manifest.permission.READ_SMS}, PackageManager.PERMISSION_GRANTED);
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                        Manifest.permission.CALL_PHONE,
+                        Manifest.permission.SEND_SMS,
+                        Manifest.permission.READ_SMS}, PackageManager.PERMISSION_GRANTED);
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         editor = sharedPreferences.edit();
 
         contactDialog = new AlertDialog.Builder(MainActivity.this);
-        contactView = getLayoutInflater().inflate(R.layout.emg_contacts,null);
+        contactView = getLayoutInflater().inflate(R.layout.emg_contacts, null);
         tv_emg_name = contactView.findViewById(R.id.emg_Name);
         tv_emg_number = contactView.findViewById(R.id.emg_Number);
         tv_emg_message = contactView.findViewById(R.id.emg_Message);
@@ -87,30 +93,30 @@ public class MainActivity extends AppCompatActivity {
         emgSavedContact();
 
         // checking for past fall events
-        if(FallEventActivity.fallEvents.isEmpty()){
+        if (FallEventActivity.fallEvents.isEmpty()) {
             FallEventActivity.fallEvents = new ArrayList<>();
         }
 
         // For foreground service
-        if(isMyServiceRunning()){
+        if (isMyServiceRunning()) {
             btn_startService.setChecked(true);
             Toast.makeText(this, "Service IS Running", Toast.LENGTH_SHORT).show();
-        }else {
+        } else {
             btn_startService.setChecked(false);
-            serviceIntent = new Intent(MainActivity.this,MyService.class);
+            serviceIntent = new Intent(MainActivity.this, MyService.class);
         }
         btn_startService.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked){
-                    if(isMyServiceRunning()){
+                if (isChecked) {
+                    if (isMyServiceRunning()) {
                         Toast.makeText(MainActivity.this, "Service IS Running", Toast.LENGTH_SHORT).show();
-                    }else {
-                        isServiceStopped=false;
+                    } else {
+                        isServiceStopped = false;
                         Toast.makeText(MainActivity.this, "Service Started", Toast.LENGTH_SHORT).show();
                         startService(serviceIntent);
                     }
-                }else{
+                } else {
 //                    stopService(serviceIntent);
                     isServiceStopped = true;
                     Toast.makeText(MainActivity.this, "Service Stopped", Toast.LENGTH_SHORT).show();
@@ -123,7 +129,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 MyService.vibrationAlert = chk_bx_Vibrate.isChecked();
-                editor.putBoolean("notifyAlert",chk_bx_Vibrate.isChecked());
+//                editor.putBoolean("notifyAlert", chk_bx_Vibrate.isChecked());
+                editor.putBoolean("pref_setting_check_vibration", chk_bx_Vibrate.isChecked());
                 editor.apply();
             }
         });
@@ -131,7 +138,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 MyService.sendSMS = chk_bx_sendSMS.isChecked();
-                editor.putBoolean("sendSMS",chk_bx_sendSMS.isChecked());
+//                editor.putBoolean("sendSMS", chk_bx_sendSMS.isChecked());
+                editor.putBoolean("pref_setting_check_sendSMS", chk_bx_sendSMS.isChecked());
                 editor.apply();
             }
         });
@@ -139,7 +147,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 MyService.sendLocation = chk_bx_sendLocation.isChecked();
-                editor.putBoolean("sendLocation",chk_bx_sendLocation.isChecked());
+//                editor.putBoolean("sendLocation", chk_bx_sendLocation.isChecked());
+                editor.putBoolean("pref_setting_check_sendLocation", chk_bx_sendLocation.isChecked());
                 editor.apply();
             }
         });
@@ -147,7 +156,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 MyService.voiceAlert = chk_bx_voiceAlert.isChecked();
-                editor.putBoolean("voiceAlert",chk_bx_voiceAlert.isChecked());
+//                editor.putBoolean("voiceAlert", chk_bx_voiceAlert.isChecked());
+                editor.putBoolean("pref_setting_check_voiceAlert", chk_bx_voiceAlert.isChecked());
                 editor.apply();
             }
         });
@@ -177,23 +187,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        savedPreferences();
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu,menu);
+        getMenuInflater().inflate(R.menu.menu, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()){
-            case R.id.menu_profile:{
-                Toast.makeText(this, "This is profile", Toast.LENGTH_SHORT).show();
+        switch (item.getItemId()) {
+//            case R.id.menu_profile: {
+//                Toast.makeText(this, "This is profile", Toast.LENGTH_SHORT).show();
+//                break;
+//            }
+            case R.id.menu_setting: {
+                startActivity(new Intent(this, SettingPreference.class));
                 break;
             }
-            case R.id.menu_setting:{
-                Toast.makeText(this, "This is Setting", Toast.LENGTH_SHORT).show();
-                break;
-            }
-            case R.id.menu_about:{
+            case R.id.menu_about: {
                 aboutDialog();
                 break;
             }
@@ -212,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    public void initialize(){
+    public void initialize() {
 
         // initializing text_views
         tv_safetySTS_safe = findViewById(R.id.safetySTS_safe);
@@ -237,32 +253,33 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void savedPreferences(){
-        chk_bx_Vibrate.setChecked(sharedPreferences.getBoolean("notifyAlert",false));
-        chk_bx_sendSMS.setChecked(sharedPreferences.getBoolean("sendSMS",false));
-        chk_bx_sendLocation.setChecked(sharedPreferences.getBoolean("sendLocation",false));
-        chk_bx_voiceAlert.setChecked(sharedPreferences.getBoolean("voiceAlert",false));
+    public void savedPreferences() {
+        /*chk_bx_Vibrate.setChecked(sharedPreferences.getBoolean("notifyAlert", false));
+        chk_bx_sendSMS.setChecked(sharedPreferences.getBoolean("sendSMS", false));
+        chk_bx_sendLocation.setChecked(sharedPreferences.getBoolean("sendLocation", false));
+        chk_bx_voiceAlert.setChecked(sharedPreferences.getBoolean("voiceAlert", false));
 
-        /*tv_emg_name.setText(sharedPreferences.getString("emgName","Name"));
-        tv_emg_number.setText(sharedPreferences.getString("emgNumber","1234567890"));
-        tv_emg_message.setText(sharedPreferences.getString("emgMessage","Hello, I need help."));*/
+        MyService.vibrationAlert = sharedPreferences.getBoolean("notifyAlert", true);
+        MyService.sendSMS = sharedPreferences.getBoolean("sendSMS", false);
+        MyService.sendLocation = sharedPreferences.getBoolean("sendLocation", false);
+        MyService.voiceAlert = sharedPreferences.getBoolean("voiceAlert", false);*/
 
-        MyService.vibrationAlert = sharedPreferences.getBoolean("notifyAlert",true);
-        MyService.sendSMS = sharedPreferences.getBoolean("sendSMS",false);
-        MyService.sendLocation = sharedPreferences.getBoolean("sendLocation",false);
-        MyService.voiceAlert = sharedPreferences.getBoolean("voiceAlert",false);
+        chk_bx_sendSMS.setChecked(sharedPreferences.getBoolean("pref_setting_check_sendSMS", false));
+        chk_bx_sendLocation.setChecked(sharedPreferences.getBoolean("pref_setting_check_sendLocation", false));
+        chk_bx_voiceAlert.setChecked(sharedPreferences.getBoolean("pref_setting_check_voiceAlert", false));
+        chk_bx_Vibrate.setChecked(sharedPreferences.getBoolean("pref_setting_check_vibration", false));
 
     }
 
-    public void emgSavedContact(){
-        emgName = sharedPreferences.getString(getString(R.string.emgName),"Name");
-        emgNumber = sharedPreferences.getString(getString(R.string.emgNumber),"1234567890");
-        emgMessage = sharedPreferences.getString(getString(R.string.emgMessage),"Hello, I need help");
+    public void emgSavedContact() {
+        emgName = sharedPreferences.getString(getString(R.string.emgName), "Name");
+        emgNumber = sharedPreferences.getString(getString(R.string.emgNumber), "1234567890");
+        emgMessage = sharedPreferences.getString(getString(R.string.emgMessage), "Hello, I need help");
     }
 
-    public void showEmgContact(){
+    public void showEmgContact() {
         contactDialog = new AlertDialog.Builder(MainActivity.this);
-        contactView = getLayoutInflater().inflate(R.layout.emg_contacts,null);
+        contactView = getLayoutInflater().inflate(R.layout.emg_contacts, null);
         tv_emg_name = contactView.findViewById(R.id.emg_Name);
         tv_emg_number = contactView.findViewById(R.id.emg_Number);
         tv_emg_message = contactView.findViewById(R.id.emg_Message);
@@ -285,9 +302,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void editEmgContact(){
+    public void editEmgContact() {
         AlertDialog.Builder editContactDialog = new AlertDialog.Builder(MainActivity.this);
-        View editEmgContactView = getLayoutInflater().inflate(R.layout.edit_emg_contacts,null);
+        View editEmgContactView = getLayoutInflater().inflate(R.layout.edit_emg_contacts, null);
         final EditText edit_emg_name = editEmgContactView.findViewById(R.id.edit_Name);
         final EditText edit_emg_number = editEmgContactView.findViewById(R.id.edit_Number);
         final EditText edit_emg_message = editEmgContactView.findViewById(R.id.edit_Message);
@@ -314,19 +331,17 @@ public class MainActivity extends AppCompatActivity {
                 emgNumber = edit_emg_number.getText().toString().trim();
                 emgMessage = edit_emg_message.getText().toString().trim();
 
-                if(emgName.length() == 0 || emgNumber.length() == 0 || emgMessage.length() == 0){
+                if (emgName.length() == 0 || emgNumber.length() == 0 || emgMessage.length() == 0) {
                     Toast.makeText(MainActivity.this, "Please Enter all details", Toast.LENGTH_SHORT).show();
-                }else {
-//                    MyService.emgName = emgName;
-//                    MyService.emgNumber = emgNumber;
-//                    MyService.emgMessage = emgMessage;
+                } else {
+
                     tv_emg_name.setText(emgName);
                     tv_emg_number.setText(emgNumber);
                     tv_emg_message.setText(emgMessage);
 
-                    editor.putString(getString(R.string.emgName),emgName);
-                    editor.putString(getString(R.string.emgNumber),emgNumber);
-                    editor.putString(getString(R.string.emgMessage),emgMessage);
+                    editor.putString(getString(R.string.emgName), emgName);
+                    editor.putString(getString(R.string.emgNumber), emgNumber);
+                    editor.putString(getString(R.string.emgMessage), emgMessage);
                     editor.apply();
 
                     Toast.makeText(MainActivity.this, "Contact Saved", Toast.LENGTH_SHORT).show();
@@ -337,9 +352,14 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void getHelpDialog(){
-        AlertDialog.Builder helpDialog = new AlertDialog.Builder(MainActivity.this);
-        View helpView = getLayoutInflater().inflate(R.layout.help_window,null);
+    public void getHelpDialog() {
+        final AlertDialog.Builder helpDialog = new AlertDialog.Builder(MainActivity.this);
+        View helpView = getLayoutInflater().inflate(R.layout.help_window, null);
+        Button btn_call_home = helpView.findViewById(R.id.btn_callHome);
+        Button btn_call_hospital = helpView.findViewById(R.id.btn_callHospital);
+        Button btn_call_police = helpView.findViewById(R.id.btn_callPolice);
+        Button btn_call_emg = helpView.findViewById(R.id.btn_callEmergency);
+        Button btn_help_edit = helpView.findViewById(R.id.btn_help_edit);
         Button btn_help_cancel = helpView.findViewById(R.id.btn_help_cancel);
 
         helpDialog.setView(helpView);
@@ -354,18 +374,99 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        btn_help_edit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, SettingPreference.class));
+                alert4help.dismiss();
+            }
+        });
+        btn_call_emg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", sharedPreferences.getString(getString(R.string.emgNumber), "1234567890"), null));
+                if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
+                startActivity(intent);
+            }
+        });
+
+        btn_call_home.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String number = sharedPreferences.getString("emgHomeNumber", null);
+                assert number != null;
+                if (!number.isEmpty()){
+                    Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel",number , null));
+                    if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                        // TODO: Consider calling
+                        //    ActivityCompat#requestPermissions
+                        // here to request the missing permissions, and then overriding
+                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                        //                                          int[] grantResults)
+                        // to handle the case where the user grants the permission. See the documentation
+                        // for ActivityCompat#requestPermissions for more details.
+                        return;
+                    }
+                    startActivity(intent);
+                }else {
+                    Toast.makeText(MainActivity.this, "Please set home number", Toast.LENGTH_SHORT).show();
+                }
+
+            }
+        });
+        btn_call_hospital.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", sharedPreferences.getString("emgHospitalNumber", "102"), null));
+                if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
+                startActivity(intent);
+            }
+        });
+
+        btn_call_police.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", sharedPreferences.getString("emgPoliceNumber", "100"), null));
+                if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
+                startActivity(intent);
+            }
+        });
+
     }
 
-    public void getHistoryDialog(){
-        /*AlertDialog.Builder historyDialog = new AlertDialog.Builder(MainActivity.this);
-        View historyView = getLayoutInflater().inflate(R.layout.fall_events,null);
+    public void edit_help_contact(){}
 
-        historyDialog.setView(historyView);
-        final AlertDialog alert4help = historyDialog.create();
-        alert4help.setCanceledOnTouchOutside(true);
-        alert4help.show();*/
-        Intent intent = new Intent(this,FallEventActivity.class);
-        startActivity(intent);
+    public void getHistoryDialog(){
+        Toast.makeText(this, "History", Toast.LENGTH_SHORT).show();
+//        Intent intent = new Intent(this,FallEventActivity.class);
+//        startActivity(intent);
     }
 
     public void aboutDialog(){
@@ -396,17 +497,5 @@ public class MainActivity extends AppCompatActivity {
             FallEventActivity.fallEvents = new ArrayList<>();
         }
     }
-
-    public void getLocation(){}
-
-    public void voicePrompt(){}
-
-    public void getNotification(){}
-
-    public void helpWindow(){}
-
-    public void fallEvents(){}
-
-
 
 }
