@@ -40,8 +40,12 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -161,7 +165,7 @@ public class MyService extends Service implements SensorEventListener {
                         stopSelf();
                         MainActivity.isServiceStopped = false;
                         sensorManager.unregisterListener(MyService.this);
-                        if (textToSpeech != null){
+                        if (textToSpeech != null) {
                             textToSpeech.stop();
                             textToSpeech.shutdown();
                         }
@@ -169,9 +173,10 @@ public class MyService extends Service implements SensorEventListener {
                         return;
                     } else {
                         try {
-                            if (Double.parseDouble(netValue) < 0.1f) {
+                            if (Double.parseDouble(netValue) < 0.08) {
                                 Log.d(TAG_FALL, " x: " + xValue + " y: " + yValue + " z: " + zValue + " netValue: " + netValue);
                                 Log.d(TAG_FALL, "run: fall Detected");
+//                                MainActivity.fallEvents.add(new FallEvents(location_link, getDateTime()));
                                 String time = preferences.getString("time_limit", String.valueOf(30));
                                 if (fallTask.getStatus() == AsyncTask.Status.RUNNING) {
                                     Log.d(TAG_TASK, "run: taskRunning");
@@ -271,19 +276,20 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
     MyReceiver myReceiver;
     Vibrator vibrator;
     SharedPreferences preferences;
-    TextToSpeech textToSpeech;
-//    FallEventActivity fallEventActivity = new FallEventActivity(serviceContext);
-
+    SharedPreferences.Editor editor;
 
     @Override
     protected void onPreExecute() {
 
-        // Registering LocationClient
+        // Registering objects
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(serviceContext);
         getLocation(serviceContext);
         myReceiver = new MyReceiver();
         vibrator = (Vibrator) serviceContext.getSystemService(Context.VIBRATOR_SERVICE);
         preferences = PreferenceManager.getDefaultSharedPreferences(serviceContext);
+
+        // checking fallEvent arrayList
+        loadData();
 
         super.onPreExecute();
     }
@@ -294,6 +300,9 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         if (preferences.getBoolean("pref_setting_check_voiceAlert", false)) {
             Log.d(TAG, "doInBackground: speaker active");
             speak(String.valueOf(integers[0]));
+        }
+        if(MainActivity.fallEvents == null){
+            MainActivity.fallEvents = new ArrayList<>();
         }
 
         IntentFilter filter = new IntentFilter();
@@ -325,10 +334,15 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
                 .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000})
                 .addAction(0, "Cancel", actionPendingIntent);
         NotificationManagerCompat NotificationMgr = NotificationManagerCompat.from(serviceContext);
-        SystemClock.sleep(6000);
-        for (int i = 1; i <= integers[0]; i++) {
+
+        while (MyService.textToSpeech.isSpeaking()){
+            SystemClock.sleep(1000);
+        }
+        for (int i = 0; i <= integers[0]; i++) {
             Log.d(TAG, "doInBackground: task running " + i);
             if (MyService.isFallTaskCancelled) {
+                MainActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime(),R.drawable.ic_error));
+                saveData();
                 cancelNotification(serviceContext, MyService.NOTIFICATION_ID2);
                 SystemClock.sleep(500);
                 resetNotify(serviceContext, MyService.NOTIFICATION_ID2, MyService.CHANNEL_ID2);
@@ -346,17 +360,17 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         }
         getLocation(serviceContext);
         cancelNotification(serviceContext, MyService.NOTIFICATION_ID2);
-//        FallEventActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime()));
-//        FallEventActivity.saveData();
-//        FallEventActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime()));
+        MainActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime(),R.drawable.ic_fall));
         SystemClock.sleep(500);
         if (preferences.getBoolean("pref_setting_check_voiceAlert", false)) {
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     for (int i = 1; i < 30; i = i + 4) {
-                        speakHelp();
-                        SystemClock.sleep(5000);
+                        if (preferences.getBoolean("pref_setting_check_voiceAlert",false)){
+                            speakHelp();
+                            SystemClock.sleep(3000);
+                        }
                     }
                 }
             });
@@ -373,7 +387,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
             cancelNotification(serviceContext, MyService.NOTIFICATION_ID2);
             failNotify(serviceContext, MyService.NOTIFICATION_ID2, MyService.CHANNEL_ID2);
         }
-//        FallEventActivity.saveData();
+        saveData();
 
         return null;
     }
@@ -459,9 +473,8 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         myManager.sendTextMessage(MainActivity.emgNumber, null, MainActivity.emgMessage, null, null);
     }
 
-
     public void speak(String timeLimit) {
-        String text = "Seizure has been detected. Help message will be send in "+timeLimit+" seconds";
+        String text = "Seizure has been detected. Help message will be send in " + timeLimit + " seconds";
         MyService.textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
     }
 
@@ -524,5 +537,27 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
 //        System.out.println(DateToStr);
         return DateToStr;
     }
+
+
+    public void saveData() {
+        Gson gson = new Gson();
+        String json = gson.toJson(MainActivity.fallEvents);
+        editor = preferences.edit();
+        editor.putString("com.example.epilepsycare.fallevent", json);
+        editor.apply();
+    }
+
+    public void loadData() {
+        if (MainActivity.fallEvents == null) {
+            MainActivity.fallEvents = new ArrayList<>();
+        }
+        Gson gson = new Gson();
+        String json = preferences.getString("com.example.epilepsycare.fallevent", null);
+        Type type = new TypeToken<ArrayList<FallEvents>>() {
+        }.getType();
+        MainActivity.fallEvents = gson.fromJson(json, type);
+
+    }
+
 
 }

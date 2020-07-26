@@ -19,30 +19,35 @@
             android:layout_height="60dp"
             android:padding="8dp"
             android:src="@drawable/ic_fall"/>
+
         <TextView
             android:id="@+id/fall_event_datetime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_toStartOf="@+id/img_fall_event_delete"
+            android:layout_toLeftOf="@+id/img_fall_event_delete"
+            android:layout_toEndOf="@+id/img_fall_event"
             android:layout_toRightOf="@+id/img_fall_event"
             android:text="Date And Time"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:layout_marginLeft="10dp"
-            android:textSize="14dp"/>
+            android:textColor="#00C853"
+            android:textSize="12dp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/fall_event_location"
-            android:layout_width="240dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
             android:layout_below="@+id/fall_event_datetime"
             android:layout_alignBottom="@+id/img_fall_event"
-            android:layout_marginBottom="-5dp"
             android:layout_toLeftOf="@+id/img_fall_event_delete"
             android:layout_toRightOf="@+id/img_fall_event"
-            android:lines="2"
+            android:lines="4"
             android:text="Location of fall"
-            android:textColor="#0E31F8"
-            android:textSize="12dp"
+            android:textColor="#6E83FA"
+            android:textSize="10dp"
             android:layout_marginLeft="10dp"
             android:textStyle="bold" />
 

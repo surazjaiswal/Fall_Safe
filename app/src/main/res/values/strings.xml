@@ -8,8 +8,7 @@
     <string name="fallEvent">com.example.epilepsycare.fallevents</string>
 
     <string name="about">
-        This is an app to detect fall/seizure or emergency which includes any fall event.
-        This app will send a help message with fall location to emergency contact.
+        This is an application to detect fall/seizure or emergency which includes any fall event. After successful fall/seizure detection it will send a help message along with fall location to emergency contact.
     </string>
 
 

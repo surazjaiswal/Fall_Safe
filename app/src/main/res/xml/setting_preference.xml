@@ -12,6 +12,7 @@
             android:defaultValue="false"/>
 
         <CheckBoxPreference
+            android:dependency="pref_setting_check_sendSMS"
             android:key="pref_setting_check_sendLocation"
             android:title="Send Location"
             android:summary="Send fall/seizure location"

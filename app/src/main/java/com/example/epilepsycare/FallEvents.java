@@ -5,10 +5,20 @@ import java.util.Date;
 public class FallEvents {
 
     String fall_location,fall_date_time;
+    int img_src;
 
-    public FallEvents(String fall_location, String fall_date_time) {
+    public FallEvents(String fall_location, String fall_date_time,int img_src) {
         this.fall_location = fall_location;
         this.fall_date_time = fall_date_time;
+        this.img_src = img_src;
+    }
+
+    public int getImg_src() {
+        return img_src;
+    }
+
+    public void setImg_src(int img_src) {
+        this.img_src = img_src;
     }
 
     public String getFall_location() {

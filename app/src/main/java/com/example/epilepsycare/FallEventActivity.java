@@ -24,19 +24,14 @@ import java.util.ArrayList;
 public class FallEventActivity extends AppCompatActivity {
 
 
-    private static final String TAG = "FallEventActivity";
-    Context context;
+    private final String TAG = "FallEventActivity";
 
-    public static ArrayList<FallEvents> fallEvents = new ArrayList<>();
-    public static SharedPreferences preferences;
-    public static SharedPreferences.Editor editor;
+//    public ArrayList<FallEvents> fallEvents = new ArrayList<>();
+    public SharedPreferences preferences;
+    public SharedPreferences.Editor editor;
 
     RecyclerView recyclerView;
     FallAdapter fallAdapter;
-
-    FallEventActivity(Context context){
-        this.context = context;
-    }
 
     @SuppressLint("CommitPrefEdits")
     @Override
@@ -44,13 +39,13 @@ public class FallEventActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fall_event);
 
-        preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         editor = preferences.edit();
 
         loadData();
 
         recyclerView = findViewById(R.id.fall_recycler_view);
-        fallAdapter = new FallAdapter(fallEvents);
+        fallAdapter = new FallAdapter(MainActivity.fallEvents);
         recyclerView.setAdapter(fallAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -69,7 +64,7 @@ public class FallEventActivity extends AppCompatActivity {
 
             @Override
             public void ItemShare(int position) {
-                String s = fallEvents.get(position).fall_location;
+                String s = preferences.getString(getString(R.string.emgMessage),"Hello, can get a help at ") +"\n" + MainActivity.fallEvents.get(position).fall_location;
                 Intent sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND)
                         .putExtra(Intent.EXTRA_TEXT,s)
@@ -80,29 +75,29 @@ public class FallEventActivity extends AppCompatActivity {
 
             @Override
             public void OnLinkClick(int position) {
-                String s = fallEvents.get(position).fall_location;
+                String s = MainActivity.fallEvents.get(position).fall_location;
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
                 startActivity(intent);
             }
         });
-
     }
 
-    public static void saveData(){
+    public void saveData(){
         Gson gson = new Gson();
-        String json = gson.toJson(fallEvents);
+        String json = gson.toJson(MainActivity.fallEvents);
         editor.putString("com.example.epilepsycare.fallevent",json);
         editor.apply();
+        fallAdapter.notifyDataSetChanged();
     }
 
-    public static void loadData(){
+    public void loadData(){
+        if(MainActivity.fallEvents==null){
+            MainActivity.fallEvents = new ArrayList<>();
+        }
         Gson gson = new Gson();
         String json = preferences.getString("com.example.epilepsycare.fallevent",null);
         Type type = new TypeToken<ArrayList<FallEvents>>(){}.getType();
-        fallEvents = gson.fromJson(json,type);
-        if(fallEvents==null){
-            fallEvents = new ArrayList<>();
-        }
+        MainActivity.fallEvents = gson.fromJson(json,type);
     }
 
 }

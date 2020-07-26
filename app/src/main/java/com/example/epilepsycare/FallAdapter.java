@@ -42,22 +42,29 @@ public class FallAdapter extends RecyclerView.Adapter<FallAdapter.ViewHolder>{
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.tv_date_time.setText(fallEvents.get(position).fall_date_time);
         holder.tv_location.setText(fallEvents.get(position).fall_location);
+        holder.img_fall_event.setImageResource(fallEvents.get(position).getImg_src());
     }
 
     @Override
     public int getItemCount() {
-        return fallEvents.size();
+        try {
+            return fallEvents.size();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     // for generating viewHolder
     public class ViewHolder extends RecyclerView.ViewHolder{
 
         TextView tv_date_time,tv_location;
-        ImageView img_delete,img_share;
+        ImageView img_fall_event,img_delete,img_share;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tv_date_time = itemView.findViewById(R.id.fall_event_datetime);
             tv_location = itemView.findViewById(R.id.fall_event_location);
+            img_fall_event = itemView.findViewById(R.id.img_fall_event);
             img_delete = itemView.findViewById(R.id.img_fall_event_delete);
             img_share = itemView.findViewById(R.id.img_fall_event_share);
 

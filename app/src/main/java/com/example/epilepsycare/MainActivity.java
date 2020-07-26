@@ -55,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
+    public static ArrayList<FallEvents> fallEvents = new ArrayList<>();
 
     // AlertDialog for emgContact view
     AlertDialog.Builder contactDialog;
@@ -93,8 +94,8 @@ public class MainActivity extends AppCompatActivity {
         emgSavedContact();
 
         // checking for past fall events
-        if (FallEventActivity.fallEvents.isEmpty()) {
-            FallEventActivity.fallEvents = new ArrayList<>();
+        if (fallEvents.isEmpty()) {
+            fallEvents = new ArrayList<>();
         }
 
         // For foreground service
@@ -403,7 +404,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String number = sharedPreferences.getString("emgHomeNumber", null);
-                assert number != null;
                 if (!number.isEmpty()){
                     Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel",number , null));
                     if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
@@ -464,9 +464,9 @@ public class MainActivity extends AppCompatActivity {
     public void edit_help_contact(){}
 
     public void getHistoryDialog(){
-        Toast.makeText(this, "History", Toast.LENGTH_SHORT).show();
-//        Intent intent = new Intent(this,FallEventActivity.class);
-//        startActivity(intent);
+//        Toast.makeText(this, "History", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this,FallEventActivity.class);
+        startActivity(intent);
     }
 
     public void aboutDialog(){
@@ -482,7 +482,7 @@ public class MainActivity extends AppCompatActivity {
         sharedPreferences = getPreferences(MODE_PRIVATE);
         editor = sharedPreferences.edit();
         Gson gson = new Gson();
-        String json = gson.toJson(FallEventActivity.fallEvents);
+        String json = gson.toJson(fallEvents);
         editor.putString("fallEvents",json);
         editor.apply();
     }
@@ -492,9 +492,9 @@ public class MainActivity extends AppCompatActivity {
         Gson gson = new Gson();
         String json = sharedPreferences.getString("fallEvents",null);
         Type type = new TypeToken<ArrayList<FallEvents>>(){}.getType();
-        FallEventActivity.fallEvents = gson.fromJson(json,type);
-        if(FallEventActivity.fallEvents==null){
-            FallEventActivity.fallEvents = new ArrayList<>();
+        fallEvents = gson.fromJson(json,type);
+        if(fallEvents==null){
+            fallEvents = new ArrayList<>();
         }
     }
 
