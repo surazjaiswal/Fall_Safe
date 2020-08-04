@@ -32,7 +32,7 @@
             android:layout_toRightOf="@+id/img_fall_event"
             android:text="Date And Time"
             android:textColor="#00C853"
-            android:textSize="12dp"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <TextView
@@ -47,7 +47,7 @@
             android:lines="4"
             android:text="Location of fall"
             android:textColor="#6E83FA"
-            android:textSize="10dp"
+            android:textSize="10sp"
             android:layout_marginLeft="10dp"
             android:textStyle="bold" />
 
@@ -59,7 +59,8 @@
             android:layout_alignParentRight="true"
             android:src="@drawable/ic_share"
             android:layout_marginRight="5dp"
-            android:layout_alignParentEnd="true" />
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="5dp" />
 
         <ImageView
             android:id="@+id/img_fall_event_delete"
@@ -67,7 +68,8 @@
             android:layout_height="50dp"
             android:padding="10dp"
             android:layout_toLeftOf="@+id/img_fall_event_share"
-            android:src="@drawable/ic_delete" />
+            android:src="@drawable/ic_delete"
+            android:layout_toStartOf="@+id/img_fall_event_share" />
 
     </RelativeLayout>
 

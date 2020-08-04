@@ -12,7 +12,7 @@
         android:paddingTop="7dp"
         android:text="EPILEPSY CARE"
         android:gravity="center"
-        android:textSize="20dp"
+        android:textSize="20sp"
         android:textColor="@color/colorPrimaryDark"/>
 
     <TextView
@@ -20,14 +20,14 @@
         android:layout_height="wrap_content"
         android:text="IIIT-NR Initiative"
         android:textColor="@color/colorPrimary"
-        android:textSize="14dp"/>
+        android:textSize="16sp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="© SuraJ"
+        android:text="Made By SuraJ"
         android:textColor="#DA1503"
-        android:textSize="14dp"/>
+        android:textSize="12sp"/>
 
     <TextView
         android:layout_width="match_parent"
@@ -35,7 +35,7 @@
         android:padding="20dp"
         android:text="@string/about"
         android:textColor="#666E69"
-        android:textSize="16dp"
+        android:textSize="16sp"
         android:textStyle="bold"
         android:textAlignment="textStart"
         android:gravity="start" />

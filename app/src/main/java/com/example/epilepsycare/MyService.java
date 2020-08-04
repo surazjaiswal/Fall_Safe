@@ -20,6 +20,7 @@ import android.hardware.SensorManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
@@ -29,6 +30,7 @@ import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.telephony.SmsManager;
 import android.util.Log;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -80,7 +82,6 @@ public class MyService extends Service implements SensorEventListener {
     Sensor accelerometer;
     Notification notification;
     NotificationCompat.Builder builder;
-    Vibrator vibrator;
     FallNotificationService fallTask;
     SharedPreferences preferences;
     static TextToSpeech textToSpeech;
@@ -173,10 +174,12 @@ public class MyService extends Service implements SensorEventListener {
                         return;
                     } else {
                         try {
-                            if (Double.parseDouble(netValue) < 0.08) {
+                            if (Double.parseDouble(netValue) < 0.1) {
                                 Log.d(TAG_FALL, " x: " + xValue + " y: " + yValue + " z: " + zValue + " netValue: " + netValue);
                                 Log.d(TAG_FALL, "run: fall Detected");
-//                                MainActivity.fallEvents.add(new FallEvents(location_link, getDateTime()));
+                                MainActivity.hasFallen = true;
+//                                MainActivity.tv_safetySTS_safe.setVisibility(View.INVISIBLE);
+//                                MainActivity.tv_safetySTS_unsafe.setVisibility(View.VISIBLE);
                                 String time = preferences.getString("time_limit", String.valueOf(30));
                                 if (fallTask.getStatus() == AsyncTask.Status.RUNNING) {
                                     Log.d(TAG_TASK, "run: taskRunning");
@@ -275,6 +278,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
     FusedLocationProviderClient fusedLocationProviderClient;
     MyReceiver myReceiver;
     Vibrator vibrator;
+    AudioManager audioManager;
     SharedPreferences preferences;
     SharedPreferences.Editor editor;
 
@@ -287,6 +291,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         myReceiver = new MyReceiver();
         vibrator = (Vibrator) serviceContext.getSystemService(Context.VIBRATOR_SERVICE);
         preferences = PreferenceManager.getDefaultSharedPreferences(serviceContext);
+        audioManager = (AudioManager) serviceContext.getSystemService(Context.AUDIO_SERVICE);
 
         // checking fallEvent arrayList
         loadData();
@@ -336,7 +341,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         NotificationManagerCompat NotificationMgr = NotificationManagerCompat.from(serviceContext);
 
         while (MyService.textToSpeech.isSpeaking()){
-            SystemClock.sleep(1000);
+            SystemClock.sleep(100);
         }
         for (int i = 0; i <= integers[0]; i++) {
             Log.d(TAG, "doInBackground: task running " + i);
@@ -346,6 +351,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
                 cancelNotification(serviceContext, MyService.NOTIFICATION_ID2);
                 SystemClock.sleep(500);
                 resetNotify(serviceContext, MyService.NOTIFICATION_ID2, MyService.CHANNEL_ID2);
+                MainActivity.hasFallen = false;
 //                MyService.isFallTaskCancelled=false;
                 return "Cancelled";
             }
@@ -358,6 +364,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
                 vibrator.vibrate(500);
             }
         }
+        MainActivity.hasFallen = false;
         getLocation(serviceContext);
         cancelNotification(serviceContext, MyService.NOTIFICATION_ID2);
         MainActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime(),R.drawable.ic_fall));
@@ -366,12 +373,16 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
+                    int normalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+                    System.out.println(normalVolume);
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),0);
                     for (int i = 1; i < 30; i = i + 4) {
                         if (preferences.getBoolean("pref_setting_check_voiceAlert",false)){
                             speakHelp();
                             SystemClock.sleep(3000);
                         }
                     }
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,normalVolume,0);
                 }
             });
             thread.start();
@@ -409,7 +420,6 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         super.onCancelled(s);
     }
 
-
     public static void cancelNotification(Context context, int notificationID) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         assert notificationManager != null;
@@ -434,7 +444,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, channelID)
                 .setAutoCancel(true)
                 .setContentTitle("Fall Event")
-                .setContentText("FALSE Fall Alarm Recorded")
+                .setContentText("False Alarm Recorded")
                 .setColor(Color.WHITE)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setTimeoutAfter(30 * 1000)
@@ -448,7 +458,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, channelID)
                 .setAutoCancel(true)
-                .setContentTitle("Fall Event")
+                .setContentTitle("Emergency")
                 .setContentText("Help message not send")
                 .setColor(Color.YELLOW)
                 .setPriority(NotificationCompat.PRIORITY_LOW)

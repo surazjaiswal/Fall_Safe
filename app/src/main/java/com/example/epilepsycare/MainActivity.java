@@ -1,6 +1,7 @@
 package com.example.epilepsycare;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -8,6 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
@@ -15,11 +17,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -44,12 +48,15 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity" ;
     public static boolean isServiceStopped = false;
+    public static boolean hasFallen = false;
     public static int timeLimit;
+    static final int PICK_CONTACT=1;
 
-    TextView tv_safetySTS_safe, tv_safetySTS_unsafe;
+    public TextView tv_safetySTS_safe, tv_safetySTS_unsafe;
     Button btn_emgContacts, btn_history, btn_help;
     CheckBox chk_bx_Vibrate, chk_bx_sendSMS, chk_bx_voiceAlert, chk_bx_sendLocation;
     Switch btn_startService;
+    Cursor cursor;
 
     Intent serviceIntent;
 
@@ -63,7 +70,10 @@ public class MainActivity extends AppCompatActivity {
 
     // Emergency Contact
     public static String emgName, emgNumber, emgMessage;
+    public static Uri uriEmgContact;
+    public String emgContactID,emgContactName,emgContactNumber;
     TextView tv_emg_name, tv_emg_number, tv_emg_message;
+    EditText edit_emg_name,edit_emg_number,edit_emg_message;
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
@@ -76,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
                 {Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                        Manifest.permission.READ_CONTACTS,
                         Manifest.permission.CALL_PHONE,
                         Manifest.permission.SEND_SMS,
                         Manifest.permission.READ_SMS}, PackageManager.PERMISSION_GRANTED);
@@ -255,6 +266,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void savedPreferences() {
+
         /*chk_bx_Vibrate.setChecked(sharedPreferences.getBoolean("notifyAlert", false));
         chk_bx_sendSMS.setChecked(sharedPreferences.getBoolean("sendSMS", false));
         chk_bx_sendLocation.setChecked(sharedPreferences.getBoolean("sendLocation", false));
@@ -306,11 +318,15 @@ public class MainActivity extends AppCompatActivity {
     public void editEmgContact() {
         AlertDialog.Builder editContactDialog = new AlertDialog.Builder(MainActivity.this);
         View editEmgContactView = getLayoutInflater().inflate(R.layout.edit_emg_contacts, null);
-        final EditText edit_emg_name = editEmgContactView.findViewById(R.id.edit_Name);
-        final EditText edit_emg_number = editEmgContactView.findViewById(R.id.edit_Number);
-        final EditText edit_emg_message = editEmgContactView.findViewById(R.id.edit_Message);
+//        final EditText edit_emg_name = editEmgContactView.findViewById(R.id.edit_Name);
+//        final EditText edit_emg_number = editEmgContactView.findViewById(R.id.edit_Number);
+//        final EditText edit_emg_message = editEmgContactView.findViewById(R.id.edit_Message);
+        edit_emg_name = editEmgContactView.findViewById(R.id.edit_Name);
+        edit_emg_number = editEmgContactView.findViewById(R.id.edit_Number);
+        edit_emg_message = editEmgContactView.findViewById(R.id.edit_Message);
         Button btn_cancel = editEmgContactView.findViewById(R.id.btn_cancel);
         Button btn_save = editEmgContactView.findViewById(R.id.btn_save);
+        Button btn_addContact = editEmgContactView.findViewById(R.id.btn_addContact);
 
         editContactDialog.setView(editEmgContactView);
         final AlertDialog alertDialog2 = editContactDialog.create();
@@ -351,6 +367,67 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        btn_addContact.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent contactPickerIntent = new Intent(Intent.ACTION_PICK,ContactsContract.Contacts.CONTENT_URI);
+                startActivityForResult(contactPickerIntent,PICK_CONTACT);
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(resultCode == RESULT_OK && requestCode == PICK_CONTACT) {
+            uriEmgContact = data.getData();
+            Log.d("SetupContact", "onActivityResult: " + uriEmgContact);
+            contactPicked();
+        }
+        else {
+            Log.e("SetupContact", "Failed to pick contact");
+        }
+    }
+
+    @SuppressLint("Recycle")
+    public void contactPicked () {
+        Log.d("SetupContact", "contactPicked: picking contact");
+
+        // getting contact ID
+        Cursor cursorID = getContentResolver().query(uriEmgContact,
+                new String[]{ContactsContract.Contacts._ID},
+                null,null,null);
+
+        if(cursorID.moveToFirst()){
+            emgContactID = cursorID.getString(cursorID.getColumnIndex(ContactsContract.Contacts._ID));
+        }
+        cursorID.close();
+        Log.d("SetupContact", "contactID: " + emgContactID);
+
+        // Using contactID to get contact details
+
+        Cursor cursorPhone = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER},
+                ContactsContract.CommonDataKinds.Phone.CONTACT_ID +"=?",
+                new String[]{emgContactID},
+                null);
+
+        if(cursorPhone.moveToFirst()){
+            emgContactNumber = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+        }
+        Log.d("SetupContact", "contactNumber: " + emgContactNumber);
+        cursorPhone.close();
+
+        Cursor cursorContactName = getContentResolver().query(uriEmgContact,null,null,null,null);
+        if(cursorContactName.moveToFirst()){
+            emgContactName = cursorContactName.getString(cursorContactName.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+        }
+        cursorContactName.close();
+        Log.d("SetupContact", "contactName: " + emgContactName);
+
+        edit_emg_name.setText(emgContactName);
+        edit_emg_number.setText(emgContactNumber.trim());
     }
 
     public void getHelpDialog() {
@@ -460,8 +537,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
-
-    public void edit_help_contact(){}
 
     public void getHistoryDialog(){
 //        Toast.makeText(this, "History", Toast.LENGTH_SHORT).show();

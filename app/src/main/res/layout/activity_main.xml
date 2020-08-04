@@ -35,7 +35,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:text="Vibration Alert"
-                android:textSize="17dp" />
+                android:textSize="17sp" />
             <CheckBox
                 android:id="@+id/chk_bx_sendSMS"
                 android:layout_width="match_parent"
@@ -43,7 +43,7 @@
                 android:layout_weight="1"
                 android:text="Send SMS"
                 android:checked="true"
-                android:textSize="17dp"/>
+                android:textSize="17sp"/>
 
         </LinearLayout>
 
@@ -60,14 +60,14 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:text="Voice Alert"
-                android:textSize="17dp"/>
+                android:textSize="17sp"/>
             <CheckBox
                 android:id="@+id/chk_bx_location"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:text="Send Location"
-                android:textSize="17dp"/>
+                android:textSize="17sp"/>
 
         </LinearLayout>
 
@@ -77,7 +77,7 @@
         android:id="@+id/btn_startService"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="25dp"
+        android:textSize="25sp"
         android:textStyle="bold"
         android:paddingHorizontal="30dp"
         android:layout_marginHorizontal="9dp"
@@ -97,7 +97,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/activity"
         android:text="Safety Status"
-        android:textSize="20dp"
+        android:textSize="20sp"
         android:layout_below="@+id/btn_startService"
         android:gravity="center"
         android:textStyle="bold"
@@ -136,7 +136,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="5dp"
-        android:textSize="20dp"
+        android:textSize="20sp"
         android:gravity="center"
         android:text="Seizure Detection Status"
         android:textStyle="bold"
@@ -154,7 +154,7 @@
         android:layout_marginTop="4dp"
         android:layout_above="@+id/relView_buttons"
         android:text="Safe"
-        android:textSize="30dp"
+        android:textSize="30sp"
         android:textColor="#9FF471"
         android:textAllCaps="true"
         android:fontFamily="sans-serif-medium"
@@ -168,7 +168,7 @@
         android:layout_marginTop="4dp"
         android:layout_above="@+id/relView_buttons"
         android:text="Unsafe"
-        android:textSize="30dp"
+        android:textSize="30sp"
         android:textColor="#F47171"
         android:textAllCaps="true"
         android:fontFamily="sans-serif-medium"
@@ -195,7 +195,7 @@
     android:layout_height="wrap_content"
     android:id="@+id/relView_buttons"
     android:padding="5dp"
-    android:layout_above="@+id/app_made_by">
+    android:layout_alignParentBottom="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -209,7 +209,7 @@
             android:layout_weight="1"
             android:text="Emergency Contact"
             android:textAllCaps="false"
-            android:textSize="17dp"/>
+            android:textSize="17sp"/>
         <Button
             android:id="@+id/btn_help"
             android:layout_width="match_parent"
@@ -217,7 +217,7 @@
             android:layout_weight="1"
             android:text="Help"
             android:textAllCaps="false"
-            android:textSize="18dp"/>
+            android:textSize="18sp"/>
         <Button
             android:id="@+id/btn_history"
             android:layout_width="match_parent"
@@ -225,7 +225,7 @@
             android:layout_weight="1"
             android:text="History"
             android:textAllCaps="false"
-            android:textSize="18dp"/>
+            android:textSize="18sp"/>
 
     </LinearLayout>
 
@@ -237,16 +237,17 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:id="@+id/app_made_by"
-    android:text="@string/cpyRight"
-    android:textSize="19dp"
+    android:text="Made with 💙 By SuraJ"
+    android:textSize="19sp"
     android:layout_alignParentBottom="true"
     android:gravity="center"
     android:textStyle="bold"
-    android:background="#08000000"
-    android:textColor="#5E5B5B"
+    android:background="#25000000"
+    android:textColor="#ffffff"
     android:elevation="9dp"
     android:layout_marginHorizontal="9dp"
-    android:layout_marginBottom="4dp"/>
+    android:layout_marginBottom="4dp"
+    android:visibility="invisible"/>
 
 
 </RelativeLayout>
