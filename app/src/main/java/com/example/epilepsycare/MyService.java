@@ -125,7 +125,7 @@ public class MyService extends Service implements SensorEventListener {
 //        FallEventActivity.preferences = PreferenceManager.getDefaultSharedPreferences(this);
 //        FallEventActivity.loadData();
 
-        // Creating Notification Channel
+        // Creating Notification Channel for android version greater than Oero(8)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel foregroundChannel = new NotificationChannel(CHANNEL_ID1, CHANNEL_NAME1, NotificationManager.IMPORTANCE_LOW);
             NotificationChannel fallEventChannel = new NotificationChannel(CHANNEL_ID2, CHANNEL_NAME2, NotificationManager.IMPORTANCE_HIGH);
@@ -281,6 +281,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
     AudioManager audioManager;
     SharedPreferences preferences;
     SharedPreferences.Editor editor;
+    int initialVolume;
 
     @Override
     protected void onPreExecute() {
@@ -295,7 +296,8 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
 
         // checking fallEvent arrayList
         loadData();
-
+        // checking for any audio mute conditions
+        initialVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         super.onPreExecute();
     }
 
@@ -304,6 +306,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
 
         if (preferences.getBoolean("pref_setting_check_voiceAlert", false)) {
             Log.d(TAG, "doInBackground: speaker active");
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC))/4,0);
             speak(String.valueOf(integers[0]));
         }
         if(MainActivity.fallEvents == null){
@@ -343,10 +346,13 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         while (MyService.textToSpeech.isSpeaking()){
             SystemClock.sleep(100);
         }
+        if(!MyService.textToSpeech.isSpeaking()){
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,initialVolume,0);
+        }
         for (int i = 0; i <= integers[0]; i++) {
             Log.d(TAG, "doInBackground: task running " + i);
             if (MyService.isFallTaskCancelled) {
-                MainActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime(),R.drawable.ic_error));
+                MainActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime(),false,"False Fall Alarm"));
                 saveData();
                 cancelNotification(serviceContext, MyService.NOTIFICATION_ID2);
                 SystemClock.sleep(500);
@@ -367,14 +373,13 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         MainActivity.hasFallen = false;
         getLocation(serviceContext);
         cancelNotification(serviceContext, MyService.NOTIFICATION_ID2);
-        MainActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime(),R.drawable.ic_fall));
+        MainActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime(),true,"Successful Fall Detection"));
         SystemClock.sleep(500);
         if (preferences.getBoolean("pref_setting_check_voiceAlert", false)) {
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    int normalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-                    System.out.println(normalVolume);
+                    int initialVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),0);
                     for (int i = 1; i < 30; i = i + 4) {
                         if (preferences.getBoolean("pref_setting_check_voiceAlert",false)){
@@ -382,7 +387,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
                             SystemClock.sleep(3000);
                         }
                     }
-                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,normalVolume,0);
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,initialVolume,0);
                 }
             });
             thread.start();

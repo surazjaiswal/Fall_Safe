@@ -1,5 +1,6 @@
 package com.example.epilepsycare;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -25,6 +26,8 @@ public class FallEventActivity extends AppCompatActivity {
 
 
     private final String TAG = "FallEventActivity";
+    public static final int ADD_NOTE_REQUEST = 77;
+    public static final String EXTRA_POSITION = "com.example.epilepsycare.EXTRA_POSITION";
 
 //    public ArrayList<FallEvents> fallEvents = new ArrayList<>();
     public SharedPreferences preferences;
@@ -38,6 +41,8 @@ public class FallEventActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fall_event);
+
+        setTitle("History");
 
         preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         editor = preferences.edit();
@@ -74,14 +79,40 @@ public class FallEventActivity extends AppCompatActivity {
             }
 
             @Override
-            public void OnLinkClick(int position) {
+            public void AddNote(int position) {
+                Intent noteIntent = new Intent(FallEventActivity.this,AddNoteActivity.class);
+                noteIntent.putExtra(EXTRA_POSITION,position);
+                startActivityForResult(noteIntent,ADD_NOTE_REQUEST);
+            }
+
+            @Override
+            public void LocateOnMap(int position) {
                 String s = MainActivity.fallEvents.get(position).fall_location;
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
                 startActivity(intent);
             }
+
+//            @Override
+//            public void OnLinkClick(int position) {
+//                String s = MainActivity.fallEvents.get(position).fall_location;
+//                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
+//                startActivity(intent);
+//            }
         });
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode,Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        saveData();
+        /*if(requestCode == ADD_NOTE_REQUEST && resultCode == RESULT_OK){
+            String note = data.getStringExtra(AddNoteActivity.EXTRA_NOTE);
+            Toast.makeText(this, "Note Saved", Toast.LENGTH_SHORT).show();
+        }
+        else{
+            Toast.makeText(this, "Note not Saved", Toast.LENGTH_SHORT).show();
+        }*/
+    }
     public void saveData(){
         Gson gson = new Gson();
         String json = gson.toJson(MainActivity.fallEvents);

@@ -35,7 +35,26 @@
             android:textSize="12sp"
             android:textStyle="bold" />
 
-        <TextView
+        <ImageView
+            android:id="@+id/addNote"
+            android:layout_width="35dp"
+            android:layout_height="28dp"
+            android:layout_toRightOf="@+id/img_fall_event"
+            android:layout_below="@+id/fall_event_datetime"
+            android:layout_margin="10dp"
+            android:src="@drawable/ic_notes"
+            />
+        <ImageView
+            android:id="@+id/LocateOnMap"
+            android:layout_width="35dp"
+            android:layout_height="28dp"
+            android:layout_toRightOf="@+id/addNote"
+            android:layout_below="@+id/fall_event_datetime"
+            android:layout_margin="10dp"
+            android:src="@drawable/ic_map_icon"
+            />
+
+        <!--<TextView
             android:id="@+id/fall_event_location"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -49,7 +68,7 @@
             android:textColor="#6E83FA"
             android:textSize="10sp"
             android:layout_marginLeft="10dp"
-            android:textStyle="bold" />
+            android:textStyle="bold" />-->
 
         <ImageView
             android:id="@+id/img_fall_event_share"

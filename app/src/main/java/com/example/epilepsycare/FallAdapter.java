@@ -18,7 +18,9 @@ public class FallAdapter extends RecyclerView.Adapter<FallAdapter.ViewHolder>{
         void onItemClick(int position);
         void ItemDelete(int position);
         void ItemShare(int position);
-        void OnLinkClick(int position);
+//        void OnLinkClick(int position);
+        void AddNote(int position);
+        void LocateOnMap(int position);
     }
 
     public void setOnItemClickListener(OnItemClickListener listener){
@@ -41,8 +43,14 @@ public class FallAdapter extends RecyclerView.Adapter<FallAdapter.ViewHolder>{
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.tv_date_time.setText(fallEvents.get(position).fall_date_time);
-        holder.tv_location.setText(fallEvents.get(position).fall_location);
-        holder.img_fall_event.setImageResource(fallEvents.get(position).getImg_src());
+//        holder.tv_location.setText(fallEvents.get(position).fall_location);
+//        holder.img_fall_event.setImageResource(fallEvents.get(position).getImg_src());
+        if(fallEvents.get(position).isFall()){
+            holder.img_fall_event.setImageResource(R.drawable.ic_fall);
+        }
+        else {
+            holder.img_fall_event.setImageResource(R.drawable.ic_error);
+        }
     }
 
     @Override
@@ -59,14 +67,16 @@ public class FallAdapter extends RecyclerView.Adapter<FallAdapter.ViewHolder>{
     public class ViewHolder extends RecyclerView.ViewHolder{
 
         TextView tv_date_time,tv_location;
-        ImageView img_fall_event,img_delete,img_share;
+        ImageView img_fall_event,img_delete,img_share,img_addNote, img_LocateOnMap;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tv_date_time = itemView.findViewById(R.id.fall_event_datetime);
-            tv_location = itemView.findViewById(R.id.fall_event_location);
+//            tv_location = itemView.findViewById(R.id.fall_event_location);
             img_fall_event = itemView.findViewById(R.id.img_fall_event);
             img_delete = itemView.findViewById(R.id.img_fall_event_delete);
             img_share = itemView.findViewById(R.id.img_fall_event_share);
+            img_addNote = itemView.findViewById(R.id.addNote);
+            img_LocateOnMap = itemView.findViewById(R.id.LocateOnMap);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -102,13 +112,35 @@ public class FallAdapter extends RecyclerView.Adapter<FallAdapter.ViewHolder>{
                     }
                 }
             });
-            tv_location.setOnClickListener(new View.OnClickListener() {
+            /*tv_location.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if(listener!=null){
                         int position = getAdapterPosition();
                         if(position != RecyclerView.NO_POSITION){
                             listener.OnLinkClick(position);
+                        }
+                    }
+                }
+            });*/
+            img_addNote.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(listener!=null){
+                        int position = getAdapterPosition();
+                        if(position != RecyclerView.NO_POSITION){
+                            listener.AddNote(position);
+                        }
+                    }
+                }
+            });
+            img_LocateOnMap.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(listener!=null){
+                        int position = getAdapterPosition();
+                        if(position != RecyclerView.NO_POSITION){
+                            listener.LocateOnMap(position);
                         }
                     }
                 }
