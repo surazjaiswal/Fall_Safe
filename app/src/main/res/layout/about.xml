@@ -10,24 +10,24 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="7dp"
-        android:text="EPILEPSY CARE"
+        android:text="@string/app_name"
         android:gravity="center"
         android:textSize="20sp"
-        android:textColor="@color/colorPrimaryDark"/>
+        android:textColor="@color/colorAccent" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="IIIT-NR Initiative"
-        android:textColor="@color/colorPrimary"
-        android:textSize="16sp"/>
+    <!--    <TextView-->
+    <!--        android:layout_width="wrap_content"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:text="@string/tagline"-->
+    <!--        android:textColor="#AEDD2C00"-->
+    <!--        android:textSize="16sp"/>-->
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Made By SuraJ"
-        android:textColor="#DA1503"
-        android:textSize="12sp"/>
+    <!-- <TextView
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:text="Made By SuraJ"
+         android:textColor="#DA1503"
+         android:textSize="12sp"/>-->
 
     <TextView
         android:layout_width="match_parent"
@@ -37,7 +37,7 @@
         android:textColor="#666E69"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:textAlignment="textStart"
-        android:gravity="start" />
+        android:gravity="center"
+        android:justificationMode="inter_word" />
 
 </LinearLayout>

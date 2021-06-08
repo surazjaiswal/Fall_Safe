@@ -11,11 +11,11 @@
         android:textSize="20sp"
         android:gravity="center"
         android:textStyle="bold"
-        android:textColor="#e5e5e5"
-        android:background="#404040"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/custom_bar_style"
         android:paddingVertical="2dp"
         android:layout_marginHorizontal="13dp"
-        android:layout_marginTop="10dp"/>
+        android:textColor="#304FFE" />
 
     <TextView
         android:id="@+id/emg_Name"
@@ -79,9 +79,9 @@
             android:text="edit contact"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:backgroundTint="#404040"
-            android:textColor="#e5e5e5"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:background="@drawable/back_view"
+            android:textColor="#D50000" />
 
     </LinearLayout>
 

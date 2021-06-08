@@ -30,7 +30,6 @@ import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.telephony.SmsManager;
 import android.util.Log;
-import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -45,13 +44,13 @@ import com.google.android.gms.tasks.Task;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.FileNotFoundException;
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.StringTokenizer;
 
 public class MyService extends Service implements SensorEventListener {
 
@@ -74,6 +73,7 @@ public class MyService extends Service implements SensorEventListener {
     String xValue, yValue, zValue;
     String netValue = "";
     double netAccel;
+    String s;
 
 
     // Creating objects of classes needed
@@ -157,26 +157,30 @@ public class MyService extends Service implements SensorEventListener {
         fgServiceNotification();
         fallTask = new FallNotificationService(MyService.this);
 
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    if (MainActivity.isServiceStopped) {
-                        stopForeground(true);
-                        stopSelf();
-                        MainActivity.isServiceStopped = false;
-                        sensorManager.unregisterListener(MyService.this);
-                        if (textToSpeech != null) {
-                            textToSpeech.stop();
-                            textToSpeech.shutdown();
-                        }
-                        Log.d(TAG, "run: Service Stopped");
-                        return;
-                    } else {
-                        try {
+        try {
+            MainActivity.fos = openFileOutput("fallEventsValue.txt", MODE_PRIVATE);
+
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        if (MainActivity.isServiceStopped) {
+                            stopForeground(true);
+                            stopSelf();
+                            MainActivity.isServiceStopped = false;
+                            sensorManager.unregisterListener(MyService.this);
+                            if (textToSpeech != null) {
+                                textToSpeech.stop();
+                                textToSpeech.shutdown();
+                            }
+                            Log.d(TAG, "run: Service Stopped");
+                            return;
+                        } else {
+                        /*try {
                             if (Double.parseDouble(netValue) < 0.1) {
                                 Log.d(TAG_FALL, " x: " + xValue + " y: " + yValue + " z: " + zValue + " netValue: " + netValue);
                                 Log.d(TAG_FALL, "run: fall Detected");
+                                saveAccelValue(netValue+" ----- Fall \n");
                                 MainActivity.hasFallen = true;
 //                                MainActivity.tv_safetySTS_safe.setVisibility(View.INVISIBLE);
 //                                MainActivity.tv_safetySTS_unsafe.setVisibility(View.VISIBLE);
@@ -190,16 +194,61 @@ public class MyService extends Service implements SensorEventListener {
                                     }
                                 }
                             }
+                            else{
+                                saveAccelValue(netValue+"\n");
+                            }
                         } catch (NumberFormatException e) {
                             e.printStackTrace();
                         }
 //                        updateForegroundNotification();
-                        SystemClock.sleep(100);
+                        SystemClock.sleep(100);*/
+                            try {
+                                if (Double.parseDouble(netValue) < 0.1) {
+                                    Log.d(TAG_FALL, " x: " + xValue + " y: " + yValue + " z: " + zValue + " netValue: " + netValue);
+                                    Log.d(TAG_FALL, "run: fall Detected");
+                                    s = netValue + " ----- Fall \n";
+                                    MainActivity.fos.write(s.getBytes());
+                                    MainActivity.hasFallen = true;
+//                                MainActivity.tv_safetySTS_safe.setVisibility(View.INVISIBLE);
+//                                MainActivity.tv_safetySTS_unsafe.setVisibility(View.VISIBLE);
+                                    String time = preferences.getString("time_limit", String.valueOf(30));
+                                    if (fallTask.getStatus() == AsyncTask.Status.RUNNING) {
+                                        Log.d(TAG_TASK, "run: taskRunning");
+                                    } else {
+                                        fallTask = new FallNotificationService(MyService.this);
+                                        if (!time.isEmpty()) {
+                                            fallTask.execute(Integer.parseInt(time));
+                                        }
+                                    }
+                                } else {
+                                    s = netValue + " \n ";
+                                    MainActivity.fos.write(s.getBytes());
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+//                        updateForegroundNotification();
+                            SystemClock.sleep(100);
+                        }
                     }
+                        /* finally {
+                            if (MainActivity.fos != null) {
+                                try {
+                                    MainActivity.fos.close();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }*/
                 }
-            }
-        });
-        thread.start();
+            });
+            thread.start();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+
         return START_STICKY;
     }
 
@@ -248,7 +297,7 @@ public class MyService extends Service implements SensorEventListener {
                 .setContentIntent(pendingIntent)
                 .setColor(Color.GREEN)
                 .setOngoing(true)
-                .setContentTitle("Epilepsy Care")
+                .setContentTitle("Fall Safe")
                 .setContentText("Be aware. Take care.");
         notification = builder.build();
         startForeground(NOTIFICATION_ID1, notification);
@@ -261,6 +310,79 @@ public class MyService extends Service implements SensorEventListener {
         notification = builder.build();
         startForeground(NOTIFICATION_ID1, notification);
     }
+
+
+  /*  public void saveAccelValue(String s) {
+        String s;
+        try {
+            MainActivity.fos = openFileOutput("fallEventsValue", MODE_PRIVATE);
+//            MainActivity.fos.write(s.getBytes());
+            try {
+                if (Double.parseDouble(netValue) < 0.1) {
+                    Log.d(TAG_FALL, " x: " + xValue + " y: " + yValue + " z: " + zValue + " netValue: " + netValue);
+                    Log.d(TAG_FALL, "run: fall Detected");
+                    s = netValue+" ----- Fall \n";
+                    MainActivity.fos.write(s.getBytes());
+                    MainActivity.hasFallen = true;
+//                                MainActivity.tv_safetySTS_safe.setVisibility(View.INVISIBLE);
+//                                MainActivity.tv_safetySTS_unsafe.setVisibility(View.VISIBLE);
+                    String time = preferences.getString("time_limit", String.valueOf(30));
+                    if (fallTask.getStatus() == AsyncTask.Status.RUNNING) {
+                        Log.d(TAG_TASK, "run: taskRunning");
+                    } else {
+                        fallTask = new FallNotificationService(MyService.this);
+                        if (!time.isEmpty()) {
+                            fallTask.execute(Integer.parseInt(time));
+                        }
+                    }
+                }
+                else{
+                    s = netValue+" \n " ;
+                }
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+//                        updateForegroundNotification();
+            SystemClock.sleep(100);
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (MainActivity.fos != null) {
+                try {
+                    MainActivity.fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }*/
+/*    public void loadAccelValue() {
+        try {
+            MainActivity.fis = openFileInput("fallEventsValue");
+            InputStreamReader isr = new InputStreamReader(MainActivity.fis);
+            BufferedReader br = new BufferedReader(isr);
+            StringBuilder sb = new StringBuilder();
+            String text;
+            while ((text = br.readLine()) != null) {
+                sb.append(text).append("\n");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (MainActivity.fis != null) {
+                try {
+                    MainActivity.fis.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }*/
 
 }
 
@@ -301,15 +423,66 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         super.onPreExecute();
     }
 
+    public static void resetNotify(Context context, int notificationID, String channelID) {
+
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, channelID)
+                .setAutoCancel(true)
+                .setContentTitle("Fall Event")
+                .setContentText("Emergency Protocol Cancelled")
+                .setColor(Color.WHITE)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setTimeoutAfter(30 * 1000)
+                .setSmallIcon(R.drawable.ic_error);
+
+        NotificationManagerCompat mNotificationMgr = NotificationManagerCompat.from(context);
+        mNotificationMgr.notify(notificationID, mBuilder.build());
+    }
+
+    public static void cancelNotification(Context context, int notificationID) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        assert notificationManager != null;
+        notificationManager.cancel(notificationID);
+    }
+
+    @Override
+    protected void onProgressUpdate(Integer... values) {
+        super.onProgressUpdate(values);
+    }
+
+    @Override
+    protected void onPostExecute(String s) {
+        MyService.isFallTaskCancelled = false;
+        serviceContext.unregisterReceiver(myReceiver);
+        super.onPostExecute(s);
+    }
+
+    @Override
+    protected void onCancelled(String s) {
+        super.onCancelled(s);
+    }
+
+    public void confirmationNotify(Context context, int notificationID, String channelID) {
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, channelID)
+                .setAutoCancel(true)
+                .setContentTitle("Send SMS")
+                .setContentText("Help Message Send Successfully")
+                .setColor(Color.GREEN)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSmallIcon(R.drawable.ic_fall);
+
+        NotificationManagerCompat mNotificationMgr = NotificationManagerCompat.from(context);
+        mNotificationMgr.notify(notificationID, mBuilder.build());
+    }
+
     @Override
     protected String doInBackground(Integer... integers) {
 
         if (preferences.getBoolean("pref_setting_check_voiceAlert", false)) {
             Log.d(TAG, "doInBackground: speaker active");
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC))/4,0);
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)) / 4, 0);
             speak(String.valueOf(integers[0]));
         }
-        if(MainActivity.fallEvents == null){
+        if (MainActivity.fallEvents == null) {
             MainActivity.fallEvents = new ArrayList<>();
         }
 
@@ -343,16 +516,16 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
                 .addAction(0, "Cancel", actionPendingIntent);
         NotificationManagerCompat NotificationMgr = NotificationManagerCompat.from(serviceContext);
 
-        while (MyService.textToSpeech.isSpeaking()){
+        while (MyService.textToSpeech.isSpeaking()) {
             SystemClock.sleep(100);
         }
-        if(!MyService.textToSpeech.isSpeaking()){
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,initialVolume,0);
+        if (!MyService.textToSpeech.isSpeaking()) {
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, initialVolume, 0);
         }
         for (int i = 0; i <= integers[0]; i++) {
             Log.d(TAG, "doInBackground: task running " + i);
             if (MyService.isFallTaskCancelled) {
-                MainActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime(),false,"False Fall Alarm"));
+                MainActivity.fallEvents.add(0, new FallEvents(MyService.location_link, MyService.location_address, getDateTime(), false, "False Fall Alarm"));
                 saveData();
                 cancelNotification(serviceContext, MyService.NOTIFICATION_ID2);
                 SystemClock.sleep(500);
@@ -373,28 +546,30 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         MainActivity.hasFallen = false;
         getLocation(serviceContext);
         cancelNotification(serviceContext, MyService.NOTIFICATION_ID2);
-        MainActivity.fallEvents.add(0,new FallEvents(MyService.location_link,getDateTime(),true,"Successful Fall Detection"));
+        MainActivity.fallEvents.add(0, new FallEvents(MyService.location_link, MyService.location_address, getDateTime(), true, "Successful Fall Detection"));
         SystemClock.sleep(500);
         if (preferences.getBoolean("pref_setting_check_voiceAlert", false)) {
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     int initialVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),0);
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
                     for (int i = 1; i < 30; i = i + 4) {
-                        if (preferences.getBoolean("pref_setting_check_voiceAlert",false)){
+                        if (preferences.getBoolean("pref_setting_check_voiceAlert", false)) {
                             speakHelp();
                             SystemClock.sleep(3000);
                         }
                     }
-                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,initialVolume,0);
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, initialVolume, 0);
                 }
             });
             thread.start();
         }
         if (preferences.getBoolean("pref_setting_check_sendSMS", false)) {
             if (preferences.getBoolean("pref_setting_check_sendLocation", false)) {
-                sendSMS(MyService.location_link, MyService.location_address);
+                if (MyService.location_link != null && MyService.location_address != null) {
+                    sendSMS(MyService.location_link, MyService.location_address);
+                }
             } else {
                 sendSMS();
             }
@@ -406,57 +581,6 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         saveData();
 
         return null;
-    }
-
-    @Override
-    protected void onProgressUpdate(Integer... values) {
-        super.onProgressUpdate(values);
-    }
-
-    @Override
-    protected void onPostExecute(String s) {
-        MyService.isFallTaskCancelled = false;
-        serviceContext.unregisterReceiver(myReceiver);
-        super.onPostExecute(s);
-    }
-
-    @Override
-    protected void onCancelled(String s) {
-        super.onCancelled(s);
-    }
-
-    public static void cancelNotification(Context context, int notificationID) {
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        assert notificationManager != null;
-        notificationManager.cancel(notificationID);
-    }
-
-    public void confirmationNotify(Context context, int notificationID, String channelID) {
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, channelID)
-                .setAutoCancel(true)
-                .setContentTitle("Send SMS")
-                .setContentText("Help Message Send Successfully")
-                .setColor(Color.GREEN)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setSmallIcon(R.drawable.ic_fall);
-
-        NotificationManagerCompat mNotificationMgr = NotificationManagerCompat.from(context);
-        mNotificationMgr.notify(notificationID, mBuilder.build());
-    }
-
-    public static void resetNotify(Context context, int notificationID, String channelID) {
-
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, channelID)
-                .setAutoCancel(true)
-                .setContentTitle("Fall Event")
-                .setContentText("False Alarm Recorded")
-                .setColor(Color.WHITE)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setTimeoutAfter(30 * 1000)
-                .setSmallIcon(R.drawable.ic_fall);
-
-        NotificationManagerCompat mNotificationMgr = NotificationManagerCompat.from(context);
-        mNotificationMgr.notify(notificationID, mBuilder.build());
     }
 
     public static void failNotify(Context context, int notificationID, String channelID) {
@@ -477,19 +601,19 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
     @SuppressLint("UnlocalizedSms")
     public void sendSMS(String location_link, String location_address) {
         SmsManager myManager = SmsManager.getDefault();
-//        myManager.sendTextMessage("8770016236", null, "Hello, I need help." +"\n" +location_address+".\n"+ location_link , null, null);
+//        myManager.sendTextMessage("number", null, "Hello, I need help." +"\n" +location_address+".\n"+ location_link , null, null);
         myManager.sendTextMessage(MainActivity.emgNumber, null, MainActivity.emgMessage + "\n" + location_address + "\n" + location_link, null, null);
     }
 
     @SuppressLint("UnlocalizedSms")
     public void sendSMS() {
         SmsManager myManager = SmsManager.getDefault();
-//        myManager.sendTextMessage("8770016236", null, "Hello, I need help.", null, null);
+//        myManager.sendTextMessage("number", null, "Hello, I need help.", null, null);
         myManager.sendTextMessage(MainActivity.emgNumber, null, MainActivity.emgMessage, null, null);
     }
 
     public void speak(String timeLimit) {
-        String text = "Seizure has been detected. Help message will be send in " + timeLimit + " seconds";
+        String text = "A Fall has been detected. Help message will be send in " + timeLimit + " seconds";
         MyService.textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
     }
 

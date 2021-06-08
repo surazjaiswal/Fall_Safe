@@ -15,6 +15,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -23,10 +25,13 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".AddNoteActivity"
-            android:parentActivityName=".FallEventActivity"></activity>
-        <activity android:name=".FallEventActivity"
-            android:launchMode="singleTop"/>
+        <activity android:name=".user_guide"></activity>
+        <activity
+            android:name=".AddNoteActivity"
+            android:parentActivityName=".FallEventActivity" />
+        <activity
+            android:name=".FallEventActivity"
+            android:launchMode="singleTop" />
 
         <service
             android:name=".MyService"

@@ -1,20 +1,17 @@
 package com.example.epilepsycare;
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -69,7 +66,7 @@ public class FallEventActivity extends AppCompatActivity {
 
             @Override
             public void ItemShare(int position) {
-                String s = preferences.getString(getString(R.string.emgMessage),"Hello, can get a help at ") +"\n" + MainActivity.fallEvents.get(position).fall_location;
+                String s = preferences.getString(getString(R.string.emgMessage), "Hello, can get a help at ") + "\n" + MainActivity.fallEvents.get(position).fall_locationLink;
                 Intent sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND)
                         .putExtra(Intent.EXTRA_TEXT,s)
@@ -87,9 +84,14 @@ public class FallEventActivity extends AppCompatActivity {
 
             @Override
             public void LocateOnMap(int position) {
-                String s = MainActivity.fallEvents.get(position).fall_location;
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
-                startActivity(intent);
+                String s = MainActivity.fallEvents.get(position).fall_locationLink;
+                if (s != null) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(FallEventActivity.this, "No Location Record", Toast.LENGTH_SHORT).show();
+                }
+
             }
 
 //            @Override

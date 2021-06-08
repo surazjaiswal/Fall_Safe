@@ -42,7 +42,7 @@
             android:layout_toRightOf="@+id/img_fall_event"
             android:layout_below="@+id/fall_event_datetime"
             android:layout_margin="10dp"
-            android:src="@drawable/ic_notes"
+            android:src="@drawable/ic_add_note"
             />
         <ImageView
             android:id="@+id/LocateOnMap"

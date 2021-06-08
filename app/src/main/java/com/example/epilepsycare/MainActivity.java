@@ -1,16 +1,7 @@
 package com.example.epilepsycare;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -18,7 +9,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,6 +18,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -36,45 +27,58 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.google.gson.Gson;
-import com.google.gson.internal.$Gson$Preconditions;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
 
-    private static final String TAG = "MainActivity" ;
+    static final int PICK_CONTACT = 1;
     public static boolean isServiceStopped = false;
     public static boolean hasFallen = false;
+    private static final String TAG = "MainActivity";
     public static int timeLimit;
-    static final int PICK_CONTACT=1;
+    public static FileOutputStream fos;
 
     public TextView tv_safetySTS_safe, tv_safetySTS_unsafe;
     Button btn_emgContacts, btn_history, btn_help;
     CheckBox chk_bx_Vibrate, chk_bx_sendSMS, chk_bx_voiceAlert, chk_bx_sendLocation;
     Switch btn_startService;
-    Cursor cursor;
+    public static FileInputStream fis;
+    public boolean locationAccess;
 
     Intent serviceIntent;
+
 
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     public static ArrayList<FallEvents> fallEvents = new ArrayList<>();
+    public String emgContactID, emgContactName, emgContactNumber;
 
     // AlertDialog for emgContact view
     AlertDialog.Builder contactDialog;
-    View contactView;
+    View contactView, userGuide;
 
     // Emergency Contact
     public static String emgName, emgNumber, emgMessage;
     public static Uri uriEmgContact;
-    public String emgContactID,emgContactName,emgContactNumber;
+    EditText edit_emg_name, edit_emg_number, edit_emg_message;
     TextView tv_emg_name, tv_emg_number, tv_emg_message;
-    EditText edit_emg_name,edit_emg_number,edit_emg_message;
+    private WebView webView; // for displaying userGuide
 
+    @SuppressLint({"SetJavaScriptEnabled", "InflateParams"})
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +94,8 @@ public class MainActivity extends AppCompatActivity {
                         Manifest.permission.CALL_PHONE,
                         Manifest.permission.SEND_SMS,
                         Manifest.permission.READ_SMS}, PackageManager.PERMISSION_GRANTED);
+
+        locationAccess = locationPermissionChk();
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         editor = sharedPreferences.edit();
@@ -112,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
         // For foreground service
         if (isMyServiceRunning()) {
             btn_startService.setChecked(true);
-            Toast.makeText(this, "Service IS Running", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Service is Running", Toast.LENGTH_SHORT).show();
         } else {
             btn_startService.setChecked(false);
             serviceIntent = new Intent(MainActivity.this, MyService.class);
@@ -120,16 +126,29 @@ public class MainActivity extends AppCompatActivity {
         btn_startService.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                if (chk_bx_sendLocation.isChecked()) {
+                    locationAccess = locationPermissionChk();
+                    if (!locationAccess) {
+                        btn_startService.setChecked(false);
+                        Toast.makeText(MainActivity.this, "Please Provide Location Permission", Toast.LENGTH_SHORT).show();
+                        ActivityCompat.requestPermissions(MainActivity.this,
+                                new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
+                        return;
+                    }
+                }
                 if (isChecked) {
                     if (isMyServiceRunning()) {
-                        Toast.makeText(MainActivity.this, "Service IS Running", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Service is Running", Toast.LENGTH_SHORT).show();
                     } else {
                         isServiceStopped = false;
                         Toast.makeText(MainActivity.this, "Service Started", Toast.LENGTH_SHORT).show();
                         startService(serviceIntent);
                     }
                 } else {
-//                    stopService(serviceIntent);
+                    if (serviceIntent != null) {
+                        stopService(serviceIntent);
+                    }
                     isServiceStopped = true;
                     Toast.makeText(MainActivity.this, "Service Stopped", Toast.LENGTH_SHORT).show();
                 }
@@ -149,6 +168,9 @@ public class MainActivity extends AppCompatActivity {
         chk_bx_sendSMS.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (!chk_bx_sendSMS.isChecked()) {
+                    chk_bx_sendLocation.setChecked(false);
+                }
                 MyService.sendSMS = chk_bx_sendSMS.isChecked();
 //                editor.putBoolean("sendSMS", chk_bx_sendSMS.isChecked());
                 editor.putBoolean("pref_setting_check_sendSMS", chk_bx_sendSMS.isChecked());
@@ -158,6 +180,20 @@ public class MainActivity extends AppCompatActivity {
         chk_bx_sendLocation.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                if (!chk_bx_sendSMS.isChecked() && chk_bx_sendLocation.isChecked()) {
+                    chk_bx_sendLocation.setChecked(false);
+                    Toast.makeText(MainActivity.this, "Check Send SMS First", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                locationAccess = locationPermissionChk();
+                if (!locationAccess) {
+                    chk_bx_sendLocation.setChecked(false);
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
+                    return;
+                }
+
                 MyService.sendLocation = chk_bx_sendLocation.isChecked();
 //                editor.putBoolean("sendLocation", chk_bx_sendLocation.isChecked());
                 editor.putBoolean("pref_setting_check_sendLocation", chk_bx_sendLocation.isChecked());
@@ -225,8 +261,26 @@ public class MainActivity extends AppCompatActivity {
                 aboutDialog();
                 break;
             }
+            case R.id.userGuide: {
+//                displayUSerGuide();
+                startActivity(new Intent(this, user_guide.class));
+                break;
+
+            }
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public boolean locationPermissionChk() {
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
+        }
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return false;
+        } else return true;
     }
 
     public boolean isMyServiceRunning() {
@@ -370,8 +424,8 @@ public class MainActivity extends AppCompatActivity {
         btn_addContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent contactPickerIntent = new Intent(Intent.ACTION_PICK,ContactsContract.Contacts.CONTENT_URI);
-                startActivityForResult(contactPickerIntent,PICK_CONTACT);
+                Intent contactPickerIntent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+                startActivityForResult(contactPickerIntent, PICK_CONTACT);
             }
         });
     }
@@ -380,26 +434,25 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if(resultCode == RESULT_OK && requestCode == PICK_CONTACT) {
+        if (resultCode == RESULT_OK && requestCode == PICK_CONTACT) {
             uriEmgContact = data.getData();
             Log.d("SetupContact", "onActivityResult: " + uriEmgContact);
             contactPicked();
-        }
-        else {
+        } else {
             Log.e("SetupContact", "Failed to pick contact");
         }
     }
 
     @SuppressLint("Recycle")
-    public void contactPicked () {
+    public void contactPicked() {
         Log.d("SetupContact", "contactPicked: picking contact");
 
         // getting contact ID
         Cursor cursorID = getContentResolver().query(uriEmgContact,
                 new String[]{ContactsContract.Contacts._ID},
-                null,null,null);
+                null, null, null);
 
-        if(cursorID.moveToFirst()){
+        if (cursorID.moveToFirst()) {
             emgContactID = cursorID.getString(cursorID.getColumnIndex(ContactsContract.Contacts._ID));
         }
         cursorID.close();
@@ -409,18 +462,18 @@ public class MainActivity extends AppCompatActivity {
 
         Cursor cursorPhone = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                 new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER},
-                ContactsContract.CommonDataKinds.Phone.CONTACT_ID +"=?",
+                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=?",
                 new String[]{emgContactID},
                 null);
 
-        if(cursorPhone.moveToFirst()){
+        if (cursorPhone.moveToFirst()) {
             emgContactNumber = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
         }
         Log.d("SetupContact", "contactNumber: " + emgContactNumber);
         cursorPhone.close();
 
-        Cursor cursorContactName = getContentResolver().query(uriEmgContact,null,null,null,null);
-        if(cursorContactName.moveToFirst()){
+        Cursor cursorContactName = getContentResolver().query(uriEmgContact, null, null, null, null);
+        if (cursorContactName.moveToFirst()) {
             emgContactName = cursorContactName.getString(cursorContactName.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
         }
         cursorContactName.close();
@@ -459,21 +512,21 @@ public class MainActivity extends AppCompatActivity {
                 alert4help.dismiss();
             }
         });
+
         btn_call_emg.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", sharedPreferences.getString(getString(R.string.emgNumber), "1234567890"), null));
-                if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
+                String number = sharedPreferences.getString(getString(R.string.emgNumber), null);
+                if (!number.isEmpty()) {
+                    Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null));
+                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 1);
+                    } else {
+                        startActivity(intent);
+                    }
+                } else {
+                    Toast.makeText(MainActivity.this, "Please provide Emergency number", Toast.LENGTH_SHORT).show();
                 }
-                startActivity(intent);
             }
         });
 
@@ -481,21 +534,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String number = sharedPreferences.getString("emgHomeNumber", null);
-                if (!number.isEmpty()){
-                    Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel",number , null));
-                    if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-                        // TODO: Consider calling
-                        //    ActivityCompat#requestPermissions
-                        // here to request the missing permissions, and then overriding
-                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                        //                                          int[] grantResults)
-                        // to handle the case where the user grants the permission. See the documentation
-                        // for ActivityCompat#requestPermissions for more details.
-                        return;
+                if (!number.isEmpty()) {
+                    Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null));
+                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 1);
+                    } else {
+                        startActivity(intent);
                     }
-                    startActivity(intent);
-                }else {
-                    Toast.makeText(MainActivity.this, "Please set home number", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Please provide home number", Toast.LENGTH_SHORT).show();
                 }
 
             }
@@ -503,74 +550,134 @@ public class MainActivity extends AppCompatActivity {
         btn_call_hospital.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", sharedPreferences.getString("emgHospitalNumber", "102"), null));
-                if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
+                String number = sharedPreferences.getString("emgHospitalNumber", null);
+                if (!number.isEmpty()) {
+                    Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null));
+                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 1);
+                    } else {
+                        startActivity(intent);
+                    }
+                } else {
+                    Toast.makeText(MainActivity.this, "Please provide Medical number", Toast.LENGTH_SHORT).show();
                 }
-                startActivity(intent);
+//                Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", sharedPreferences.getString("emgHospitalNumber", "102"), null));
+//                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+//                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 1);
+//                } else {
+//                    startActivity(intent);
+//                }
             }
         });
 
         btn_call_police.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", sharedPreferences.getString("emgPoliceNumber", "100"), null));
-                if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
+                String number = sharedPreferences.getString("emgPoliceNumber", null);
+                if (!number.isEmpty()) {
+                    Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null));
+                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 1);
+                    } else {
+                        startActivity(intent);
+                    }
+                } else {
+                    Toast.makeText(MainActivity.this, "Please provide Police number", Toast.LENGTH_SHORT).show();
                 }
-                startActivity(intent);
+//                Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", sharedPreferences.getString("emgPoliceNumber", "100"), null));
+//                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+//                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 1);
+//                } else {
+//                    startActivity(intent);
+//                }
             }
         });
 
     }
 
-    public void getHistoryDialog(){
+    public void getHistoryDialog() {
 //        Toast.makeText(this, "History", Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(this,FallEventActivity.class);
+        Intent intent = new Intent(this, FallEventActivity.class);
         startActivity(intent);
     }
 
-    public void aboutDialog(){
+    public void aboutDialog() {
         AlertDialog.Builder aboutDialog = new AlertDialog.Builder(MainActivity.this);
-        View aboutView = getLayoutInflater().inflate(R.layout.about,null);
+        View aboutView = getLayoutInflater().inflate(R.layout.about, null);
 
         aboutDialog.setView(aboutView);
         aboutDialog.create().show();
 
     }
 
-    public void saveData(){
+    public void saveData() {
         sharedPreferences = getPreferences(MODE_PRIVATE);
         editor = sharedPreferences.edit();
         Gson gson = new Gson();
         String json = gson.toJson(fallEvents);
-        editor.putString("fallEvents",json);
+        editor.putString("fallEvents", json);
         editor.apply();
     }
 
-    public void loadData(){
+    public void loadData() {
         sharedPreferences = getPreferences(MODE_PRIVATE);
         Gson gson = new Gson();
-        String json = sharedPreferences.getString("fallEvents",null);
-        Type type = new TypeToken<ArrayList<FallEvents>>(){}.getType();
-        fallEvents = gson.fromJson(json,type);
-        if(fallEvents==null){
+        String json = sharedPreferences.getString("fallEvents", null);
+        Type type = new TypeToken<ArrayList<FallEvents>>() {
+        }.getType();
+        fallEvents = gson.fromJson(json, type);
+        if (fallEvents == null) {
             fallEvents = new ArrayList<>();
         }
     }
+
+    /*public void saveAccelValue(String s) {
+//        FileOutputStream fos = null;
+        try {
+            fos = openFileOutput("fallEventsValue", MODE_PRIVATE);
+            fos.write(s.getBytes());
+//            mEditText.getText().clear();
+//            Toast.makeText(this, "Saved to " + getFilesDir() + "/" + "fallEventsValue",
+//                    Toast.LENGTH_SHORT).show();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+    public void loadAccelValue() {
+//        FileInputStream fis = null;
+        try {
+            fis = openFileInput("fallEventsValue");
+            InputStreamReader isr = new InputStreamReader(fis);
+            BufferedReader br = new BufferedReader(isr);
+            StringBuilder sb = new StringBuilder();
+            String text;
+            while ((text = br.readLine()) != null) {
+                sb.append(text).append("\n");
+            }
+//            mEditText.setText(sb.toString());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }*/
 
 }
