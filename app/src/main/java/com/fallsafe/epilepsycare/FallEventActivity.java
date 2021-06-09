@@ -89,7 +89,7 @@ public class FallEventActivity extends AppCompatActivity {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
                     startActivity(intent);
                 } else {
-                    Toast.makeText(FallEventActivity.this, "No Location Record", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(FallEventActivity.this, "No Location Record.\nMake sure Location is always turned ON", Toast.LENGTH_SHORT).show();
                 }
 
             }

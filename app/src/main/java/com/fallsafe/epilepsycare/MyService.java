@@ -567,7 +567,9 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         }
         if (preferences.getBoolean("pref_setting_check_sendSMS", false)) {
             if (preferences.getBoolean("pref_setting_check_sendLocation", false)) {
-                if (MyService.location_link != null && MyService.location_address != null) {
+                if (MyService.location_link == null || MyService.location_address == null) {
+                    sendSMS();
+                } else {
                     sendSMS(MyService.location_link, MyService.location_address);
                 }
             } else {

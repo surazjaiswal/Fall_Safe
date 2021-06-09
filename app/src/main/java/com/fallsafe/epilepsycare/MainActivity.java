@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(MainActivity.this, new String[]
                 {Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+
                         Manifest.permission.READ_CONTACTS,
                         Manifest.permission.CALL_PHONE,
                         Manifest.permission.SEND_SMS,
@@ -133,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
                         btn_startService.setChecked(false);
                         Toast.makeText(MainActivity.this, "Please Provide Location Permission", Toast.LENGTH_SHORT).show();
                         ActivityCompat.requestPermissions(MainActivity.this,
-                                new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
+                                new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
                         return;
                     }
                 }
@@ -211,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Allow all time location permission", Toast.LENGTH_SHORT).show();
                     chk_bx_sendLocation.setChecked(false);
                     ActivityCompat.requestPermissions(MainActivity.this,
-                            new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
                     return;
                 }
 
@@ -294,12 +294,12 @@ public class MainActivity extends AppCompatActivity {
 
     public boolean locationPermissionChk() {
         if (ContextCompat.checkSelfPermission(MainActivity.this,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(MainActivity.this,
-                    new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
         }
         if (ContextCompat.checkSelfPermission(MainActivity.this,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return false;
         } else return true;
     }
