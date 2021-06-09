@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:title="Settings">
 
     <PreferenceCategory android:title="Alert Methods">
 
@@ -9,7 +9,7 @@
             android:key="pref_setting_check_sendSMS"
             android:title="Send SMS"
             android:summary="Send help message through SMS"
-            android:defaultValue="false"/>
+            android:defaultValue="false" />
 
         <CheckBoxPreference
             android:dependency="pref_setting_check_sendSMS"
@@ -48,7 +48,6 @@
     <PreferenceCategory android:title="Emergency Contacts">
         <EditTextPreference
             android:key="emgHomeNumber"
-            android:defaultValue=""
             android:title="Home"
             android:summary="Home phone number"
             android:inputType="number"
@@ -56,18 +55,16 @@
 
         <EditTextPreference
             android:key="emgHospitalNumber"
-            android:defaultValue="102"
             android:title="Hospital"
             android:summary="Hospital phone number"
             android:inputType="number"
             android:dialogTitle="Enter Hospital Phone Number"/>
         <EditTextPreference
             android:key="emgPoliceNumber"
-            android:defaultValue="100"
             android:title="Police"
             android:summary="Police phone number"
             android:inputType="number"
-            android:dialogTitle="Enter Home Phone Number"/>
+            android:dialogTitle="Enter Police Phone Number" />
 
 
     </PreferenceCategory>

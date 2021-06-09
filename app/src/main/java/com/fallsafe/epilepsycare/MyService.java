@@ -1,4 +1,4 @@
-package com.example.epilepsycare;
+package com.fallsafe.epilepsycare;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -36,7 +36,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
-import com.example.epilepsycare.Constants.Constants;
+import com.fallsafe.epilepsycare.Constants.Constants;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -525,7 +525,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         for (int i = 0; i <= integers[0]; i++) {
             Log.d(TAG, "doInBackground: task running " + i);
             if (MyService.isFallTaskCancelled) {
-                MainActivity.fallEvents.add(0, new FallEvents(MyService.location_link, MyService.location_address, getDateTime(), false, "False Fall Alarm"));
+                MainActivity.fallEvents.add(0, new FallEvents(MyService.location_link, MyService.location_address, getDateTime(), false, "Fall detected but Emergency procedure was revoked."));
                 saveData();
                 cancelNotification(serviceContext, MyService.NOTIFICATION_ID2);
                 SystemClock.sleep(500);
@@ -600,6 +600,9 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
 
     @SuppressLint("UnlocalizedSms")
     public void sendSMS(String location_link, String location_address) {
+        if (MainActivity.emgNumber == null) {
+            return;
+        }
         SmsManager myManager = SmsManager.getDefault();
 //        myManager.sendTextMessage("number", null, "Hello, I need help." +"\n" +location_address+".\n"+ location_link , null, null);
         myManager.sendTextMessage(MainActivity.emgNumber, null, MainActivity.emgMessage + "\n" + location_address + "\n" + location_link, null, null);
@@ -607,6 +610,9 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
 
     @SuppressLint("UnlocalizedSms")
     public void sendSMS() {
+        if (MainActivity.emgNumber == null) {
+            return;
+        }
         SmsManager myManager = SmsManager.getDefault();
 //        myManager.sendTextMessage("number", null, "Hello, I need help.", null, null);
         myManager.sendTextMessage(MainActivity.emgNumber, null, MainActivity.emgMessage, null, null);
@@ -682,7 +688,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
         Gson gson = new Gson();
         String json = gson.toJson(MainActivity.fallEvents);
         editor = preferences.edit();
-        editor.putString("com.example.epilepsycare.fallevent", json);
+        editor.putString("com.fallsafe.epilepsycare.fallevent", json);
         editor.apply();
     }
 
@@ -691,7 +697,7 @@ class FallNotificationService extends AsyncTask<Integer, Integer, String> {
             MainActivity.fallEvents = new ArrayList<>();
         }
         Gson gson = new Gson();
-        String json = preferences.getString("com.example.epilepsycare.fallevent", null);
+        String json = preferences.getString("com.fallsafe.epilepsycare.fallevent", null);
         Type type = new TypeToken<ArrayList<FallEvents>>() {
         }.getType();
         MainActivity.fallEvents = gson.fromJson(json, type);

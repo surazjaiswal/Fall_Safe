@@ -1,4 +1,4 @@
-package com.example.epilepsycare;
+package com.fallsafe.epilepsycare;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -24,7 +24,7 @@ public class FallEventActivity extends AppCompatActivity {
 
     private final String TAG = "FallEventActivity";
     public static final int ADD_NOTE_REQUEST = 77;
-    public static final String EXTRA_POSITION = "com.example.epilepsycare.EXTRA_POSITION";
+    public static final String EXTRA_POSITION = "com.fallsafe.epilepsycare.EXTRA_POSITION";
 
 //    public ArrayList<FallEvents> fallEvents = new ArrayList<>();
     public SharedPreferences preferences;
@@ -118,7 +118,7 @@ public class FallEventActivity extends AppCompatActivity {
     public void saveData(){
         Gson gson = new Gson();
         String json = gson.toJson(MainActivity.fallEvents);
-        editor.putString("com.example.epilepsycare.fallevent",json);
+        editor.putString("com.fallsafe.epilepsycare.fallevent", json);
         editor.apply();
         fallAdapter.notifyDataSetChanged();
     }
@@ -128,8 +128,9 @@ public class FallEventActivity extends AppCompatActivity {
             MainActivity.fallEvents = new ArrayList<>();
         }
         Gson gson = new Gson();
-        String json = preferences.getString("com.example.epilepsycare.fallevent",null);
-        Type type = new TypeToken<ArrayList<FallEvents>>(){}.getType();
+        String json = preferences.getString("com.fallsafe.epilepsycare.fallevent", null);
+        Type type = new TypeToken<ArrayList<FallEvents>>() {
+        }.getType();
         MainActivity.fallEvents = gson.fromJson(json,type);
     }
 

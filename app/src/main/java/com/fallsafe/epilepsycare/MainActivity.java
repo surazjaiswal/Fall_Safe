@@ -1,4 +1,4 @@
-package com.example.epilepsycare;
+package com.fallsafe.epilepsycare;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -168,6 +168,13 @@ public class MainActivity extends AppCompatActivity {
         chk_bx_sendSMS.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                String number = sharedPreferences.getString(getString(R.string.emgNumber), null);
+                if (number == null) {
+                    chk_bx_sendSMS.setChecked(false);
+                    Toast.makeText(MainActivity.this, "Please provide emergency contact detail ", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 if (!chk_bx_sendSMS.isChecked()) {
                     chk_bx_sendLocation.setChecked(false);
                 }
@@ -175,6 +182,19 @@ public class MainActivity extends AppCompatActivity {
 //                editor.putBoolean("sendSMS", chk_bx_sendSMS.isChecked());
                 editor.putBoolean("pref_setting_check_sendSMS", chk_bx_sendSMS.isChecked());
                 editor.apply();
+
+//                if(emgContactNumber == null){
+//                    chk_bx_sendSMS.setChecked(false);
+//                    Toast.makeText(MainActivity.this, "Please provide emergency contact detail ", Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
+//                if (!chk_bx_sendSMS.isChecked()) {
+//                    chk_bx_sendLocation.setChecked(false);
+//                }
+//                MyService.sendSMS = chk_bx_sendSMS.isChecked();
+////                editor.putBoolean("sendSMS", chk_bx_sendSMS.isChecked());
+//                editor.putBoolean("pref_setting_check_sendSMS", chk_bx_sendSMS.isChecked());
+//                editor.apply();
             }
         });
         chk_bx_sendLocation.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -188,6 +208,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 locationAccess = locationPermissionChk();
                 if (!locationAccess) {
+                    Toast.makeText(MainActivity.this, "Allow all time location permission", Toast.LENGTH_SHORT).show();
                     chk_bx_sendLocation.setChecked(false);
                     ActivityCompat.requestPermissions(MainActivity.this,
                             new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
@@ -339,9 +360,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void emgSavedContact() {
-        emgName = sharedPreferences.getString(getString(R.string.emgName), "Name");
-        emgNumber = sharedPreferences.getString(getString(R.string.emgNumber), "1234567890");
-        emgMessage = sharedPreferences.getString(getString(R.string.emgMessage), "Hello, I need help");
+//        emgName = sharedPreferences.getString(getString(R.string.emgName), "Name");
+//        emgNumber = sharedPreferences.getString(getString(R.string.emgNumber), "1234567890");
+//        emgMessage = sharedPreferences.getString(getString(R.string.emgMessage), "Hello, I need help");
+
+        emgName = sharedPreferences.getString(getString(R.string.emgName), null);
+        emgNumber = sharedPreferences.getString(getString(R.string.emgNumber), null);
+        emgMessage = sharedPreferences.getString(getString(R.string.emgMessage), null);
     }
 
     public void showEmgContact() {
@@ -517,15 +542,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String number = sharedPreferences.getString(getString(R.string.emgNumber), null);
-                if (!number.isEmpty()) {
+                if (number == null) {
+                    Toast.makeText(MainActivity.this, "Please provide Emergency number", Toast.LENGTH_SHORT).show();
+                } else {
                     Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null));
                     if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 1);
                     } else {
                         startActivity(intent);
                     }
-                } else {
-                    Toast.makeText(MainActivity.this, "Please provide Emergency number", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -534,15 +559,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String number = sharedPreferences.getString("emgHomeNumber", null);
-                if (!number.isEmpty()) {
+                if (number == null) {
+                    Toast.makeText(MainActivity.this, "Please provide home number", Toast.LENGTH_SHORT).show();
+                } else {
                     Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null));
                     if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 1);
                     } else {
                         startActivity(intent);
                     }
-                } else {
-                    Toast.makeText(MainActivity.this, "Please provide home number", Toast.LENGTH_SHORT).show();
+
                 }
 
             }
@@ -551,15 +577,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String number = sharedPreferences.getString("emgHospitalNumber", null);
-                if (!number.isEmpty()) {
+                if (number == null) {
+                    Toast.makeText(MainActivity.this, "Please provide Medical number", Toast.LENGTH_SHORT).show();
+                } else {
                     Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null));
                     if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 1);
                     } else {
                         startActivity(intent);
                     }
-                } else {
-                    Toast.makeText(MainActivity.this, "Please provide Medical number", Toast.LENGTH_SHORT).show();
+
                 }
 //                Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", sharedPreferences.getString("emgHospitalNumber", "102"), null));
 //                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
@@ -574,15 +601,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String number = sharedPreferences.getString("emgPoliceNumber", null);
-                if (!number.isEmpty()) {
+                if (number == null) {
+                    Toast.makeText(MainActivity.this, "Please provide Police number", Toast.LENGTH_SHORT).show();
+                } else {
                     Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null));
                     if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 1);
                     } else {
                         startActivity(intent);
                     }
-                } else {
-                    Toast.makeText(MainActivity.this, "Please provide Police number", Toast.LENGTH_SHORT).show();
                 }
 //                Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", sharedPreferences.getString("emgPoliceNumber", "100"), null));
 //                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {

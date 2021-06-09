@@ -1,4 +1,4 @@
-package com.example.epilepsycare;
+package com.fallsafe.epilepsycare;
 
 import android.os.Bundle;
 import android.webkit.WebView;

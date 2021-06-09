@@ -2,10 +2,10 @@
 
     <string name="app_name">Fall Safe</string>
     <string name="cpyRight">Made By Suraj</string>
-    <string name="emgName">com.example.epilepsycare.emgname</string>
-    <string name="emgNumber">com.example.epilepsycare.emgnumber</string>
-    <string name="emgMessage">com.example.epilepsycare.emgmessage</string>
-    <string name="fallEvent">com.example.epilepsycare.fallevents</string>
+    <string name="emgName">com.fallsafe.epilepsycare.emgname</string>
+    <string name="emgNumber">com.fallsafe.epilepsycare.emgnumber</string>
+    <string name="emgMessage">com.fallsafe.epilepsycare.emgmessage</string>
+    <string name="fallEvent">com.fallsafe.epilepsycare.fallevents</string>
 
     <string name="about">
         This is an application to detect fall/seizure or emergency which includes any fall event. After successful fall/seizure detection it will send a help message along with fall location to emergency contact.

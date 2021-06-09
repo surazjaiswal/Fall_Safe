@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".user_guide">
+    tools:context="com.fallsafe.epilepsycare.user_guide">
 
     <!--    <RelativeLayout-->
     <!--        android:layout_width="match_parent"-->

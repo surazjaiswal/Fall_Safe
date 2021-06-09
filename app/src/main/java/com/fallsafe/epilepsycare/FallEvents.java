@@ -1,4 +1,4 @@
-package com.example.epilepsycare;
+package com.fallsafe.epilepsycare;
 
 public class FallEvents {
 

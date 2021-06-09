@@ -1,4 +1,4 @@
-package com.example.epilepsycare;
+package com.fallsafe.epilepsycare;
 
 import android.view.LayoutInflater;
 import android.view.View;

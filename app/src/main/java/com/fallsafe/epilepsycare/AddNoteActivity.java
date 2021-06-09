@@ -1,4 +1,4 @@
-package com.example.epilepsycare;
+package com.fallsafe.epilepsycare;
 
 import android.content.Intent;
 import android.graphics.Color;
@@ -18,7 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class AddNoteActivity extends AppCompatActivity {
 
-    public static final String EXTRA_NOTE = "com.example.epilepsycare.EXTRA_NOTE";
+    public static final String EXTRA_NOTE = "com.fallsafe.epilepsycare.EXTRA_NOTE";
     private EditText editTextNote;
     ImageView noteViewFallImage;
     private TextView tvNoteViewLocation, tvNoteViewDateTime, tvNoteViewFallStatus;
@@ -102,8 +102,8 @@ public class AddNoteActivity extends AppCompatActivity {
             tvNoteViewFallStatus.setTextColor(Color.RED);
             noteViewFallImage.setImageResource(R.drawable.ic_fall);
         } else {
-            tvNoteViewFallStatus.setText("False Fall Detected");
-            tvNoteViewFallStatus.setTextColor(Color.GREEN);
+            tvNoteViewFallStatus.setText("Emergency Procedure Revoked");
+            tvNoteViewFallStatus.setTextColor(Color.MAGENTA);
             noteViewFallImage.setImageResource(R.drawable.ic_error);
         }
     }

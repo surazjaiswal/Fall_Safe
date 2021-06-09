@@ -1,4 +1,4 @@
-package com.example.epilepsycare.Constants;
+package com.fallsafe.epilepsycare.Constants;
 
 public class Constants {
 

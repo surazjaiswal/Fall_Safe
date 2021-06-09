@@ -1,10 +1,10 @@
-package com.example.epilepsycare;
+package com.fallsafe.epilepsycare;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import com.example.epilepsycare.Constants.Constants;
+import com.fallsafe.epilepsycare.Constants.Constants;
 
 public class MyReceiver extends BroadcastReceiver {
 

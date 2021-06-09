@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.epilepsycare">
+    package="com.fallsafe.epilepsycare">
 
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.SEND_SMS" />
@@ -25,26 +25,26 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".user_guide"></activity>
+        <activity android:name="com.fallsafe.epilepsycare.user_guide"></activity>
         <activity
-            android:name=".AddNoteActivity"
-            android:parentActivityName=".FallEventActivity" />
+            android:name="com.fallsafe.epilepsycare.AddNoteActivity"
+            android:parentActivityName="com.fallsafe.epilepsycare.FallEventActivity" />
         <activity
-            android:name=".FallEventActivity"
+            android:name="com.fallsafe.epilepsycare.FallEventActivity"
             android:launchMode="singleTop" />
 
         <service
-            android:name=".MyService"
+            android:name="com.fallsafe.epilepsycare.MyService"
             android:enabled="true"
             android:exported="false" />
 
         <receiver
-            android:name=".MyReceiver"
+            android:name="com.fallsafe.epilepsycare.MyReceiver"
             android:enabled="true"
             android:exported="false" />
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.fallsafe.epilepsycare.MainActivity"
             android:launchMode="singleTop"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -53,7 +53,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".SettingPreference" />
+        <activity android:name="com.fallsafe.epilepsycare.SettingPreference" />
     </application>
 
 </manifest>
