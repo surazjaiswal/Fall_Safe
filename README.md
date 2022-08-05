@@ -1,4 +1,11 @@
 # Fall_Safe
-An android application to detect fall and trigger predefined emergency protocols.
 
-[User Guide](./app/src/main/assets/user_guide_fall_safe.pdf)
+<ul>
+  <li> Android application to detect fall/seizure event, post triggering predefined emergency protocols for seeking help. </li>
+  <li> Full-fledged application with features like sharing fall location, voice-seek-help, emergency call. Special event note feature
+for post examination.</li>
+<li> This application also works as foreground service; works despite of phone in screen-off/sleep mode.</li>
+<li> Worked with Android Services, Sensors, Geo-Location, Notification Service, Broadcasting, Foreground Service.</li>
+</ul>
+
+[User Guide](https://drive.google.com/file/d/1rBYlSlhiWGJFjIV-C8jsMJG4RcSIWoX1/view?usp=sharing)
